@@ -1,0 +1,65 @@
+# Editor and system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+
+# Logs and temporary files
+*.log
+frontend/test-results/
+frontend/playwright-report/
+报告业务逻辑说明_复刻基准_2026-09-V2.0.md
+*.tmp
+tmp/
+temp/
+
+# Frontend
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+.turbo/
+
+# Backend
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+
+# Local data
+*.sqlite
+*.sqlite3
+*.db
+uploads/
+exports/
+
+# OS and tool caches
+.cache/
+
+# 私有业务输入及运行数据
+*.xlsx
+*.xls
+*.csv
+*.tsv
+*.db
+*.sqlite*
+*.html
+!frontend/index.html
+data/
+runtime/
+.codegraph/
+.env
+*.log

@@ -1,0 +1,203 @@
+/* 用户原报告的布局值优先于公司默认视觉值。仅使用公开语义类。 */
+.report-sidebar {
+  padding: 22px 16px;
+}
+.sidebar-heading {
+  padding: 0;
+}
+.sidebar-logo {
+  display: inline-flex;
+  min-height: 28px;
+  margin-bottom: 12px;
+  padding: 4px 12px;
+  border: 1px solid var(--report-color-logo-accent);
+  background: var(--report-color-logo-bg);
+  color: var(--report-color-logo-accent);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+.sidebar-title {
+  margin: 0 0 8px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.report-period {
+  margin: 0 0 22px;
+  line-height: 1.6;
+  color: var(--color-text-sidebar-muted);
+}
+.month-control {
+  margin-bottom: 16px;
+  gap: 6px;
+  color: var(--report-color-sidebar-label);
+}
+.sidebar-tools {
+  padding: 16px 0 0;
+  gap: 8px;
+}
+.report-header {
+  display: block;
+  padding: 24px 28px 10px;
+  border-bottom: 1px solid var(--seekway-color-border-secondary);
+  background: rgba(244, 247, 251, 0.96);
+  backdrop-filter: blur(8px);
+}
+.report-header h1 {
+  margin: 0 0 6px;
+  font-size: 26px;
+  line-height: 1.25;
+}
+.report-header > div > span {
+  display: block;
+  margin-bottom: 18px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.preview-label {
+  position: absolute;
+  top: 10px;
+  right: 28px;
+  font-size: 10px;
+  line-height: 16px;
+}
+.page-content {
+  padding: 14px 28px 44px;
+}
+.report-panel {
+  padding: 16px;
+  box-shadow: var(--seekway-box-shadow);
+}
+.report-panel-heading {
+  line-height: 1.4;
+}
+.metric-card {
+  height: 139px;
+  border-top: 3px solid var(--seekway-color-primary);
+}
+.metric-card:nth-child(2) {
+  border-top-color: var(--seekway-color-info);
+}
+.metric-card:nth-child(3) {
+  border-top-color: var(--seekway-color-warning);
+}
+.metric-card:nth-child(4) {
+  border-top-color: var(--report-color-success);
+}
+.metric-card .report-panel-body > span {
+  font-size: 13px;
+}
+.metric-value {
+  margin: 7px 0 8px;
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.metric-comparison {
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+.metric-comparison > :first-child {
+  color: var(--seekway-color-text-secondary);
+}
+.metric-comparison strong {
+  color: var(--report-color-success);
+}
+.overview-chart-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+}
+.overview-page > .overview-chart-grid > .report-panel {
+  min-height: 424.39px;
+}
+.overview-page > .conclusion-card {
+  height: 129.19px;
+  border-left: 4px solid var(--seekway-color-primary);
+}
+.conclusion-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.85;
+}
+.report-chart figcaption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.report-chart figcaption:focus-within {
+  position: static;
+  width: auto;
+  height: auto;
+  clip-path: none;
+}
+.section-heading {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+.business-filters {
+  padding: 12px 14px;
+  background: var(--seekway-color-bg-container);
+  border: 1px solid var(--seekway-color-border-secondary);
+  border-radius: 8px;
+}
+.business-filters .filter-field {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+}
+.business-filters .report-panel-body > div {
+  min-height: 20px;
+}
+.business-kpi-panel {
+  padding-top: 16px;
+}
+
+.sidebar-logo {
+  line-height: 19px;
+  min-height: 28px;
+}
+.month-control {
+  margin-top: -10px;
+  line-height: 14px;
+}
+.report-month-select {
+  width: 100%;
+  height: 36px;
+  border: 1px solid var(--report-color-month-border);
+  border-radius: 6px;
+  background: var(--seekway-color-text);
+  color: var(--seekway-color-bg-container);
+  padding: 0 10px;
+  font: inherit;
+  font-size: 13px;
+}
+.sidebar-tools button {
+  background: transparent;
+  border-color: var(--report-color-tool-border);
+  color: var(--seekway-color-bg-container);
+  text-align: left;
+  justify-content: flex-start;
+}
+.conclusion-list {
+  list-style: none;
+  padding-left: 0;
+}
+.conclusion-list li::before {
+  content: "◆";
+  font-size: 8px;
+  color: var(--seekway-color-primary);
+  margin-right: 10px;
+}
+
+.metric-value small {
+  display: inline;
+  margin-left: 6px;
+  color: var(--seekway-color-text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+}

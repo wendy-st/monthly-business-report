@@ -1,0 +1,125 @@
+import type { OverviewDetails } from "./overview-contracts";
+
+export type Amounts = Record<string, string | null>;
+export type MetricRow = {
+  key: string;
+  label: string;
+  dimensions: Record<string, string>;
+  current: Amounts;
+  previous: Amounts;
+  year_ago: Amounts;
+  record_count: number;
+  status: string;
+  diagnosis: string;
+  source_rows: number[];
+  changes: Record<string, string | null>;
+};
+export type Filters = Record<string, string>;
+export type Step = {
+  label: string;
+  amount: string | null;
+  kind: "total" | "change";
+};
+export type FinancialView = {
+  overview?: OverviewDetails;
+  summary: MetricRow;
+  series: MetricRow[];
+  breakdowns: Record<string, MetricRow[]>;
+  waterfall: Record<string, Step[]>;
+  options: Record<string, string[]>;
+  warnings: string[];
+  snapshot_id: string;
+};
+export type CostRow = {
+  key: string;
+  label: string;
+  current: string | null;
+  base: string | null;
+  current_rate: string | null;
+  base_rate: string | null;
+  delta: string | null;
+  elasticity: string | null;
+  profit_impact: string | null;
+  reason: string;
+  overview_expense: boolean;
+  change_rate: string | null;
+  theoretical_amount: string | null;
+};
+export type BasisAnalysis = {
+  basis: string;
+  comparison: string;
+  current: Amounts;
+  base: Amounts;
+  rows: CostRow[];
+  business_rows?: CostRow[];
+  unavailable_listings: number;
+  bridges: CostBridge[];
+  leverage: Amounts;
+  scenarios: Amounts[];
+};
+export type CostBridge = {
+  key: string;
+  label: string;
+  actual: string | null;
+  adjusted: string | null;
+  restored: string | null;
+  standardization: string | null;
+  refund: string | null;
+  equivalent: string | null;
+  judgement: string;
+};
+export type InventoryRow = {
+  key: string;
+  label: string;
+  dimensions: Record<string, string>;
+  values: Amounts;
+  source_rows: number[];
+};
+export type FutureRow = {
+  month: string;
+  scope: string;
+  scenario: string;
+  demand: string | null;
+  remaining: string | null;
+  support_days: string | null;
+  calendar_days: number;
+};
+export type InventoryView = {
+  summary: InventoryRow;
+  breakdowns: Record<string, InventoryRow[]>;
+  turnover: InventoryRow[];
+  future: FutureRow[];
+  warnings: string[];
+  source_note: string;
+  seasonal: { key: string; label: string; risk: SeasonalRisk }[];
+};
+export type SeasonalRisk = {
+  phase: string;
+  peak_month: string;
+  season_end: string;
+  health: string;
+  score: number;
+  level: string;
+  reasons: string[];
+  season_end_remaining_rate: string | null;
+  window_end_remaining_rate: string | null;
+};
+export type HistoryView = {
+  annual: MetricRow[];
+  quarterly: MetricRow[];
+  monthly: MetricRow[];
+  listings: MetricRow[];
+  best_months: MetricRow[];
+  years: string[];
+  source_note: string;
+  excluded: MetricRow[];
+  options: Record<string, string[]>;
+};
+export type SourceStatus = {
+  report_month: string;
+  identity: string;
+  counts: Record<string, number>;
+  mode: string;
+  formula_freshness: string;
+  files: { file: string; sha256: string; size: number }[];
+};

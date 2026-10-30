@@ -1,0 +1,276 @@
+.business-page .report-table-scroll {
+  min-width: 0;
+  max-width: 100%;
+}
+.business-page .report-table {
+  font-variant-numeric: tabular-nums;
+}
+.business-page .report-table td,
+.business-page .report-table th {
+  padding: 8px 9px;
+  height: auto;
+}
+.business-page .report-table small {
+  display: block;
+  color: var(--seekway-color-text-secondary);
+  font-size: 11px;
+}
+.business-page .business-subtotal td {
+  background: var(--business-summary-bg);
+  font-weight: 700;
+}
+.business-page .business-listing-table td:nth-child(-n + 4),
+.business-page .business-listing-table th:nth-child(-n + 4) {
+  text-align: left;
+}
+.business-full-listings {
+  min-width: 2650px;
+}
+.business-full-listings thead tr:first-child th {
+  height: 36px;
+  text-align: center;
+  color: var(--business-head-text);
+}
+.business-full-listings thead tr:last-child th {
+  height: 34px;
+  color: var(--business-head-text);
+}
+.business-full-listings thead tr:first-child th:nth-child(-n + 8) {
+  background: var(--business-head-base);
+}
+.business-full-listings thead tr:first-child th:nth-child(9),
+.business-full-listings thead tr:last-child th:nth-child(-n + 2) {
+  background: var(--business-head-gross);
+}
+.business-full-listings thead tr:first-child th:nth-child(10),
+.business-full-listings
+  thead
+  tr:last-child
+  th:nth-child(n + 3):nth-child(-n + 4) {
+  background: var(--business-head-product);
+}
+.business-full-listings thead tr:first-child th:nth-child(11),
+.business-full-listings
+  thead
+  tr:last-child
+  th:nth-child(n + 5):nth-child(-n + 6) {
+  background: var(--business-head-net);
+}
+.business-full-listings thead tr:first-child th:nth-child(12),
+.business-full-listings
+  thead
+  tr:last-child
+  th:nth-child(n + 7):nth-child(-n + 12) {
+  background: var(--business-head-mom);
+}
+.business-full-listings thead tr:first-child th:nth-child(13),
+.business-full-listings thead tr:last-child th:nth-child(n + 13) {
+  background: var(--business-head-yoy);
+}
+.business-full-listings tbody td:nth-child(n + 9):nth-child(-n + 10) {
+  background: var(--business-cell-gross);
+}
+.business-full-listings tbody td:nth-child(n + 11):nth-child(-n + 12) {
+  background: var(--business-cell-product);
+}
+.business-full-listings tbody td:nth-child(n + 13):nth-child(-n + 14) {
+  background: var(--business-cell-net);
+}
+.business-full-listings tbody td:nth-child(13).impact-negative {
+  background: var(--business-cell-loss);
+}
+.business-full-listings tbody td:nth-child(n + 15):nth-child(-n + 20) {
+  background: var(--business-cell-mom);
+}
+.business-full-listings tbody td:nth-child(n + 21) {
+  background: var(--business-cell-yoy);
+}
+.business-full-listings tbody td:nth-child(9),
+.business-full-listings tbody td:nth-child(11),
+.business-full-listings tbody td:nth-child(13).impact-positive {
+  color: var(--seekway-color-text);
+}
+.business-listing-table:not(.business-full-listings)
+  td:nth-child(7).impact-positive {
+  background: var(--business-cell-net);
+}
+.business-listing-table:not(.business-full-listings)
+  td:nth-child(7).impact-negative {
+  background: var(--business-cell-loss);
+}
+.business-price-panel {
+  isolation: isolate;
+}
+.business-matrix-scroll {
+  max-height: 432px;
+  overflow: auto;
+  border: 1px solid var(--seekway-color-border-secondary);
+}
+.business-matrix {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+}
+.business-matrix th,
+.business-matrix td {
+  padding: 8px 10px;
+  text-align: right;
+  border-bottom: 1px solid var(--business-border);
+  white-space: nowrap;
+}
+.business-matrix thead th {
+  position: sticky;
+  background: var(--business-head-bg);
+  color: var(--report-color-value-label);
+  z-index: 2;
+}
+.business-matrix thead tr:first-child th {
+  top: 0;
+  height: 34px;
+  text-align: center;
+}
+.business-matrix thead tr:last-child th {
+  top: 34px;
+  height: 32px;
+}
+.business-matrix td:first-child,
+.business-matrix thead th[rowspan] {
+  text-align: left;
+}
+.business-matrix .return-divider {
+  border-left: 2px solid var(--business-return-divider);
+}
+.business-matrix .trend-divider {
+  border-left: 2px solid var(--business-trend-divider);
+}
+.business-matrix-site td {
+  position: sticky;
+  top: 66px;
+  z-index: 1;
+  background: var(--business-site-bg);
+  color: var(--business-site-text);
+  font-weight: 700;
+  text-align: left;
+  padding: 7px 10px;
+}
+.business-matrix-site td:last-child {
+  text-align: right;
+  font-weight: 400;
+}
+.business-matrix-listing {
+  font-weight: 700;
+}
+.business-matrix .current-price {
+  background: var(--business-price-bg);
+  color: var(--business-price-text);
+  font-weight: 700;
+}
+.business-matrix .current-return {
+  background: var(--business-return-bg);
+  color: var(--business-return-text);
+  font-weight: 700;
+}
+.business-matrix .business-return-trend {
+  min-width: 280px;
+  text-align: left;
+  font-weight: 700;
+}
+.business-missing {
+  color: var(--business-axis);
+}
+.business-refund-table {
+  min-width: 1100px;
+  table-layout: fixed;
+}
+.business-page .business-refund-table th,
+.business-page .business-refund-table td {
+  padding: 7px 0;
+  border-bottom: 1px solid var(--report-color-table-divider);
+  font-size: 12px;
+  line-height: 16px;
+}
+.business-refund-table th {
+  padding-top: 0;
+  background: transparent;
+  color: var(--seekway-color-text-secondary);
+}
+.business-refund-table :is(th, td):nth-child(1) {
+  width: 136px;
+}
+.business-refund-table :is(th, td):nth-child(3) {
+  width: 92px;
+}
+.business-refund-table :is(th, td):nth-child(4) {
+  width: 84px;
+}
+.business-refund-table :is(th, td):nth-child(5) {
+  width: 100px;
+}
+.business-refund-table :is(th, td):nth-child(6) {
+  width: 106px;
+}
+.business-refund-table :is(th, td):nth-child(7) {
+  width: 160px;
+}
+.business-refund-table :is(th, td):nth-child(8) {
+  width: 126px;
+}
+.business-refund-table :is(th, td):nth-child(9) {
+  width: 100px;
+}
+.business-refund-table :is(th, td):nth-child(n + 3) {
+  padding-left: 10px;
+}
+.business-refund-table td:nth-child(3) {
+  color: var(--seekway-color-text-secondary);
+}
+.business-cost-track {
+  display: block;
+  width: 100%;
+  height: 14px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--report-color-track);
+}
+.business-cost-track i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--seekway-color-primary),
+    var(--seekway-color-info)
+  );
+}
+.business-refund-table .business-adjusted > span {
+  display: block;
+  margin: -4px 0;
+  border-left: 2px dashed var(--business-axis);
+  border-radius: 4px;
+  padding: 4px 6px 4px 12px;
+  background: var(--seekway-color-warning-bg);
+}
+.business-refund-table th.business-adjusted > span {
+  background: var(--business-adjusted-head);
+  color: var(--business-adjusted-text);
+}
+.business-change-badge.impact-positive {
+  background: var(--business-positive-bg);
+}
+.business-change-badge.impact-negative {
+  background: var(--business-negative-bg);
+}
+.business-refund-table tfoot {
+  border-top: 2px solid var(--business-axis);
+  background: var(--business-summary-bg);
+  font-weight: 700;
+}
+.business-refund-table tfoot th {
+  background: transparent;
+  color: var(--business-active-basis);
+}
+.business-refund-table tfoot td:nth-child(n + 1) {
+  width: auto;
+}

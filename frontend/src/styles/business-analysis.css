@@ -1,0 +1,100 @@
+.business-conclusions {
+  margin: 20px 0 0;
+  padding: 0 14px;
+  list-style: none;
+  counter-reset: business-conclusion;
+  background: var(--business-conclusion-bg);
+  border: 1px solid var(--business-conclusion-divider);
+}
+.business-conclusions li {
+  position: relative;
+  padding: 5px 0 5px 30px;
+  border-bottom: 1px solid var(--business-conclusion-divider);
+  counter-increment: business-conclusion;
+  font-size: 13px;
+}
+.business-conclusions li::before {
+  position: absolute;
+  left: 0;
+  top: 5px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  content: counter(business-conclusion);
+  border: 1px solid var(--seekway-color-primary);
+  background: var(--seekway-color-bg-container);
+  color: var(--seekway-color-primary);
+  font-size: 12px;
+  font-weight: 800;
+}
+.business-conclusions li:last-child {
+  border-bottom: 0;
+}
+.business-conclusions strong {
+  font-size: 14px;
+  line-height: 1.35;
+}
+.business-conclusions p {
+  margin: 1px 0 0;
+  line-height: 1.45;
+  color: var(--report-color-summary-copy);
+}
+.business-page .business-leverage {
+  margin-top: 0;
+}
+.business-leverage section + section {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--seekway-color-border-secondary);
+}
+.business-analysis-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.business-analysis-heading h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.business-analysis-heading > span {
+  color: var(--seekway-color-text-secondary);
+  font-size: 12px;
+}
+.business-page .business-leverage .report-table :is(th, td) {
+  padding: 8px 9px;
+}
+.business-page .business-leverage .report-table {
+  min-width: 980px;
+}
+.business-page .overview-impact-label small {
+  font-size: 11px;
+  font-weight: 500;
+}
+.business-page .overview-impact-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.business-page .overview-impact-summary span {
+  display: block;
+}
+.business-page .overview-impact-summary strong.impact-positive {
+  color: var(--business-positive);
+}
+.business-page .overview-impact-summary strong.impact-negative {
+  color: var(--business-negative);
+}
+.business-page .overview-impact-bar.impact-positive {
+  background: var(--business-bar-positive);
+}
+.business-page .overview-impact-bar.impact-negative {
+  background: var(--business-bar-negative);
+}
+.business-page .income-profit-section .conversion-heading h3 {
+  font-size: 15px;
+}
+.business-page .platform-receivable > strong {
+  color: var(--business-active-basis);
+}

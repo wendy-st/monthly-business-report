@@ -1,0 +1,23 @@
+[project]
+name = "monthly-operating-report"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["fastapi==0.141.1", "pydantic==2.13.4", "uvicorn==0.52.3"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.12", "mypy>=1.18"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true

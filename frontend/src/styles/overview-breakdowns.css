@@ -1,0 +1,89 @@
+.overview-breakdowns,
+.overview-shops {
+  isolation: isolate;
+}
+.overview-breakdowns :is(th, td),
+.overview-shops :is(th, td) {
+  font-size: 12px;
+  white-space: nowrap;
+}
+.overview-share-cell {
+  background: var(--seekway-color-fill-alter);
+}
+.overview-profit-positive {
+  background: var(--report-color-cost-heat);
+}
+.overview-profit-negative {
+  color: var(--report-color-negative);
+  background: var(--seekway-color-error-bg);
+}
+.overview-total-row {
+  font-weight: 700;
+  background: var(--seekway-color-fill-alter);
+}
+.overview-change {
+  white-space: nowrap;
+}
+.overview-category-scroll {
+  overflow-x: auto;
+}
+.overview-category-table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.overview-category-table th,
+.overview-category-table td {
+  padding: 7px 0 7px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--report-color-table-divider);
+}
+.overview-category-table th {
+  font-weight: 400;
+  color: var(--seekway-color-text-secondary);
+}
+.overview-category-table :is(th, td):first-child {
+  width: 240px;
+  padding-left: 0;
+  text-align: left;
+}
+.overview-category-table :is(th, td):nth-child(2) {
+  width: 54%;
+}
+.overview-category-table :is(th, td):nth-child(n + 3) {
+  min-width: 100px;
+}
+.overview-category-track {
+  height: 10px;
+  border-radius: 6px;
+  background: var(--report-color-rank-track);
+}
+.overview-category-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--seekway-color-primary),
+    var(--report-color-positive)
+  );
+}
+.overview-shops select {
+  min-height: 32px;
+  min-width: 132px;
+  padding: 4px 10px;
+  border: 1px solid var(--seekway-color-border);
+  border-radius: 6px;
+  color: var(--seekway-color-text);
+  background: var(--seekway-color-bg-container);
+}
+.overview-shop-mom {
+  background: var(--report-color-group-band);
+}
+.overview-shop-yoy {
+  background: var(--report-color-summary-bg);
+}
+.overview-ranking-grid {
+  align-items: start;
+}

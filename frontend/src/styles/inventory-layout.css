@@ -1,0 +1,230 @@
+.report-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--seekway-color-border-secondary);
+  min-height: 49px;
+}
+.report-tabs button {
+  height: 38px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 0 16px;
+}
+.inventory-section-title {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0;
+  font-size: 18px;
+  line-height: 24px;
+}
+.inventory-section-title > b {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  border-radius: 5px;
+  background: var(--report-color-section-index);
+  color: var(--seekway-color-bg-container);
+  font-size: 16px;
+}
+.inventory-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-top: 1px solid var(--seekway-color-border-secondary);
+  margin-top: 8px;
+  padding-top: 18px;
+}
+.inventory-conclusion {
+  min-height: 203.67px;
+  border-left: 1px solid var(--seekway-color-border-secondary);
+  background: var(--seekway-color-bg-container);
+}
+.inventory-conclusion-lines {
+  background: var(--report-color-conclusion-bg);
+  border-left: 4px solid var(--report-color-conclusion-border);
+  padding: 3.5px 14px;
+}
+.inventory-conclusion-lines p {
+  margin: 0;
+  padding: 10px 0;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.inventory-conclusion-lines p + p {
+  border-top: 1px solid var(--report-color-conclusion-divider);
+}
+.warehouse-share-row {
+  display: grid;
+  grid-template-columns: 115px minmax(0, 1fr) 145px;
+  gap: 10px;
+  align-items: center;
+  min-height: 27px;
+  font-size: 12px;
+}
+.warehouse-share-row > span:last-child {
+  text-align: right;
+  color: var(--seekway-color-text-secondary);
+  font-size: 11px;
+}
+.warehouse-track {
+  display: block;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--report-color-track);
+  overflow: hidden;
+}
+.warehouse-track i {
+  display: block;
+  height: 100%;
+  background: var(--report-color-fba);
+}
+.warehouse-color-1 i {
+  background: var(--report-color-overseas);
+}
+.warehouse-color-2 i {
+  background: var(--report-color-local);
+}
+.inventory-structure-grid {
+  display: grid;
+  grid-template-columns: 0.78fr 1.22fr;
+  gap: 14px;
+}
+.inventory-structure-grid > .report-panel {
+  min-height: 438.39px;
+  min-width: 0;
+}
+.inventory-structure-table small {
+  display: block;
+  font-size: 11px;
+  margin-top: 9px;
+  color: var(--seekway-color-text-secondary);
+}
+.inventory-structure-table .share-track {
+  width: 60px;
+}
+.inventory-turnover-grid .chart-canvas {
+  height: 380px;
+}
+.inventory-turnover-grid .report-panel-heading {
+  font-size: 14px;
+}
+.inventory-future-panel .chart-canvas {
+  height: 410px;
+}
+.age-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.age-group-card {
+  border: 1px solid var(--seekway-color-border-secondary);
+  border-radius: 8px;
+  padding: 14px;
+}
+.age-card-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+}
+.age-card-title span {
+  font-size: 11px;
+  color: var(--seekway-color-text-secondary);
+}
+.age-highlights {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+  font-size: 12px;
+}
+.age-highlights > div {
+  background: var(--report-color-table-label);
+  border: 1px solid var(--seekway-color-border-secondary);
+  padding: 10px;
+}
+.age-highlights strong {
+  display: block;
+  font-size: 22px;
+  margin-top: 4px;
+  color: var(--seekway-color-error);
+}
+.age-listing-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 45px;
+  gap: 8px;
+  align-items: center;
+  border-bottom: 1px solid var(--report-color-table-divider);
+  min-height: 34px;
+  font-size: 11px;
+}
+.history-intro h2 {
+  font-size: 22px;
+  margin: 0;
+}
+.history-intro p {
+  font-size: 12px;
+  color: var(--seekway-color-text-secondary);
+}
+.history-toolbar .report-panel-body {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.history-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.history-summary-grid strong,
+.history-summary-grid small {
+  display: block;
+  margin-top: 8px;
+}
+.history-summary-grid strong {
+  font-size: 24px;
+}
+.history-summary-grid small {
+  color: var(--seekway-color-text-secondary);
+}
+@media (max-width: 1100px) {
+  .inventory-structure-grid,
+  .age-card-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .warehouse-share-row {
+    grid-template-columns: 65px minmax(0, 1fr) 125px;
+  }
+  .history-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.business-page > .report-tabs {
+  margin-top: -2px;
+  margin-bottom: -6px;
+  padding-top: 8px;
+  padding-bottom: 6px;
+  min-height: 55px;
+}
+.business-page > .report-tabs button {
+  height: 40px;
+}
+.business-filters {
+  padding: 10px 14px;
+}
+.business-kpi-panel .section-heading {
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.business-filters .business-filter-row {
+  display: flex;
+}

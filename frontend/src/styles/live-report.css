@@ -1,0 +1,159 @@
+.listing-compact-row {
+  display: grid;
+  grid-template-columns: 150px minmax(180px, 0.9fr) minmax(220px, 1.3fr) minmax(
+      200px,
+      1fr
+    );
+}
+@media (max-width: 1280px) {
+  .listing-compact-row {
+    grid-template-columns: 100px repeat(3, minmax(0, 1fr));
+  }
+}
+.listing-compact-row > div {
+  padding: 13px 14px;
+  min-width: 0;
+  border-right: 1px solid var(--seekway-color-border-secondary);
+  overflow-wrap: anywhere;
+}
+.listing-compact-row > div:last-child {
+  border-right: 0;
+}
+.live-report .two-column {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--section-gap);
+}
+.live-report .product-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--field-gap);
+}
+.live-report .overview-page > .conclusion-card {
+  height: auto;
+  min-height: 129.19px;
+}
+.live-report .business-filter-strip {
+  display: flex;
+  gap: var(--field-gap);
+  flex-wrap: wrap;
+}
+.live-report .business-filter-strip > label {
+  min-width: 160px;
+  flex: 1;
+}
+.live-report .metric-comparison strong.negative-change {
+  color: var(--report-color-negative);
+}
+.waterfall-heading {
+  display: grid;
+  grid-template-columns: minmax(210px, 30%) auto;
+  align-items: center;
+  gap: 16px;
+}
+.waterfall-heading > :last-child {
+  justify-self: start;
+}
+.waterfall-plot {
+  overflow-x: auto;
+}
+.profit-waterfall .chart-canvas {
+  height: 370px;
+  min-width: 1100px;
+}
+.conversion-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-block: 1px solid var(--seekway-color-border-secondary);
+  color: var(--seekway-color-text-secondary);
+  font-size: 12px;
+}
+.conversion-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 16px 0 10px;
+}
+.conversion-heading h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.conversion-heading > span {
+  color: var(--seekway-color-text-secondary);
+  font-size: 12px;
+}
+.income-profit-grid {
+  display: grid;
+  grid-template-columns: 1.05fr repeat(3, minmax(0, 1fr));
+  border-block: 1px solid var(--seekway-color-border-secondary);
+  background: var(--seekway-color-fill-alter);
+}
+.income-profit-grid > div {
+  min-width: 0;
+  padding: 16px;
+  border-right: 1px solid var(--seekway-color-border-secondary);
+}
+.income-profit-grid > div:last-child {
+  border-right: 0;
+}
+.income-profit-grid span,
+.income-profit-grid small {
+  display: block;
+  color: var(--seekway-color-text-secondary);
+  font-size: 11px;
+  line-height: 1.55;
+}
+.income-profit-grid strong {
+  display: block;
+  margin: 4px 0;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.platform-receivable strong {
+  font-size: 30px;
+}
+.elasticity-item.active {
+  box-shadow: inset 0 -3px var(--seekway-color-info);
+  background: var(--seekway-color-bg-container);
+}
+.waterfall-detail {
+  margin-top: 16px;
+}
+.waterfall-detail summary {
+  padding: 8px 0;
+  cursor: pointer;
+}
+@media (max-width: 1100px) {
+  .income-profit-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .income-profit-grid > .platform-receivable {
+    grid-column: 1 / -1;
+    border-right: 0;
+    border-bottom: 1px solid var(--seekway-color-border-secondary);
+  }
+}
+@media print {
+  .live-report > .report-sidebar,
+  .live-report .report-header,
+  .live-report .listing-heading button {
+    display: none;
+  }
+  .live-report .report-body {
+    margin-left: 0;
+  }
+  .live-report .listing-report,
+  .live-report .listing-compact-row {
+    break-inside: avoid;
+  }
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+}

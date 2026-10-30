@@ -1,0 +1,251 @@
+.product-page {
+  gap: 0;
+}
+.product-page .product-filters {
+  padding: 10px 12px;
+  border-radius: 0;
+  height: 71px;
+}
+.product-head h2 {
+  line-height: 1.25;
+}
+.product-page > .section-heading small {
+  display: block;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--seekway-color-text-secondary);
+  font-weight: 400;
+  margin-top: 3px;
+}
+.product-page > .three-col-grid > .report-panel {
+  height: 442.75px;
+  overflow: auto;
+}
+.product-page .product-matrix {
+  font-size: 11px;
+}
+.product-matrix th,
+.product-matrix td {
+  padding: 7px;
+}
+.product-matrix .positive {
+  color: var(--report-color-positive);
+  font-weight: 700;
+}
+.product-matrix .negative {
+  color: var(--report-color-negative);
+  font-weight: 700;
+}
+.product-matrix .cost-heat {
+  background: var(--report-color-cost-heat);
+}
+.product-page .ranking-list li {
+  grid-template-columns: minmax(0, 1.15fr) minmax(36px, 1fr) 70px;
+  min-height: 38px;
+  padding: 5px 0;
+  gap: 7px;
+}
+.product-page .ranking-list strong {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.product-page .ranking-list li > div {
+  min-width: 0;
+  line-height: 1.25;
+}
+.product-page .ranking-list li > div > br {
+  display: none;
+}
+.product-page .ranking-list li > div > span {
+  font-size: 9px;
+}
+.loss-track {
+  height: 8px;
+  background: var(--report-color-rank-track);
+}
+.loss-track i {
+  display: block;
+  height: 100%;
+  background: var(--report-color-rank-loss);
+}
+.cost-matrix-card + .cost-matrix-card {
+  margin-top: 12px;
+}
+.cost-comparison-grid {
+  margin-top: 12px;
+}
+.cost-rate-section {
+  padding: 11px 0;
+  border-bottom: 1px solid var(--report-color-cost-divider);
+}
+.cost-rate-section h4 {
+  margin: 0 0 9px;
+  font-size: 12px;
+}
+.cost-rate-row {
+  display: grid;
+  grid-template-columns: 75px 1fr 55px;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+  min-height: 26px;
+}
+.cost-rate-row .share-track {
+  width: 100%;
+}
+.sample-note {
+  font-size: 11px;
+  color: var(--seekway-color-text-secondary);
+  line-height: 1.7;
+}
+.product-head {
+  height: 68px;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 4px;
+  justify-content: space-between;
+}
+.product-head h2 {
+  font-size: 24px;
+}
+.product-head > span {
+  font-size: 11px;
+  color: var(--report-color-grain);
+  white-space: nowrap;
+  padding-top: 10px;
+}
+.product-head > div > span {
+  display: block;
+  font-size: 12px;
+  margin-top: 5px;
+}
+.product-filters {
+  padding: 10px 12px;
+  border-radius: 0;
+  box-shadow: 0 3px 12px rgba(25, 48, 82, 0.07);
+}
+.filter-grid {
+  grid-template-columns: repeat(9, minmax(0, 1fr)) minmax(150px, 1.35fr);
+}
+.product-filters .filter-field {
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.product-reset {
+  position: absolute;
+  right: 0;
+  top: -37px;
+}
+.product-filters .report-panel-body {
+  position: relative;
+}
+.product-groups {
+  margin-top: 10px;
+  height: 30px;
+}
+.product-page > .section-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 40px;
+  margin: 18px 0 9px;
+  font-size: 17px;
+}
+.product-page > .section-heading::before {
+  content: "1";
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: var(--seekway-color-primary);
+  color: var(--seekway-color-bg-container);
+  font-size: 14px;
+}
+.product-page > .section-heading:nth-of-type(2)::before {
+  content: "2";
+}
+.product-page > .section-heading:nth-of-type(3)::before {
+  content: "3";
+}
+.product-page .three-col-grid {
+  grid-template-columns: 1.05fr 1.15fr 0.9fr;
+  gap: 12px;
+}
+.product-page .report-panel {
+  box-shadow: none;
+  padding: 14px 15px;
+  border-radius: 6px;
+}
+.product-page .report-panel-heading {
+  font-size: 14px;
+}
+.product-page > .three-col-grid > .report-panel {
+  min-height: 442.75px;
+}
+.product-page .chart-canvas {
+  height: 220px;
+}
+.product-page > .two-col-grid {
+  margin-top: 12px;
+}
+.product-page .ranking-list {
+  list-style: none;
+  padding: 0;
+}
+.product-page .ranking-list li {
+  border-bottom: 1px solid var(--report-color-listing-divider);
+  display: grid;
+  gap: 7px;
+  align-items: center;
+}
+.product-page .ranking-list li > div {
+  font-size: 11px;
+}
+.product-page .ranking-list li > span {
+  font-size: 11px;
+  text-align: right;
+}
+@media (max-width: 1350px) {
+  .filter-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@media (max-width: 1100px) {
+  .overview-chart-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .product-page .three-col-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .product-page .three-col-grid > :last-child {
+    grid-column: 1 / -1;
+  }
+  .product-head > span {
+    display: none;
+  }
+}
+
+.product-page > .section-heading {
+  line-height: 1.2;
+}
+.product-page .product-matrix {
+  line-height: 1.35;
+}
+
+.product-groups button {
+  height: 30px;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 4px;
+}
+.product-filters .filter-field {
+  color: var(--seekway-color-text-secondary);
+}
+.product-page .ranking-list li > span:last-child {
+  white-space: nowrap;
+}
