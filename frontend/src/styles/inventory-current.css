@@ -36,11 +36,11 @@
 .inventory-group-filters label:last-of-type {
   min-width: 260px;
 }
-.inventory-page .warehouse-share-row {
+.live-report .inventory-page .warehouse-share-row {
   grid-template-columns: minmax(55px, 20%) minmax(25px, 1fr) minmax(100px, 28%);
   min-height: 31px;
 }
-.inventory-page .warehouse-share-row > span:last-child {
+.live-report .inventory-page .warehouse-share-row > span:last-child {
   font-size: 12px;
 }
 .inventory-page .inventory-structure-table th,

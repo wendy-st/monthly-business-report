@@ -1,3 +1,4 @@
+import { useReportMonth, comparedMonth } from "./report-month";
 import { Card, Radio, Segmented, Table } from "antd";
 import { ReportChart } from "../../shared/report/ReportChart";
 import type { BasisAnalysis, FinancialView, Step } from "./contracts";
@@ -22,13 +23,14 @@ export function ProfitBridge({
   scope: string;
   overview?: boolean;
 }) {
+  const { month } = useReportMonth();
   const { comparison, basis, onComparison, onBasis } = selection;
   const steps = data.waterfall[comparison];
   const analyses =
     costs?.filter((item) => item.comparison === comparison) ?? [];
   const analysis = analyses.find((item) => item.basis === basis);
   const complete = steps.every((step) => step.amount !== null);
-  const period = comparison === "mom" ? "2026-08" : "2025-09";
+  const period = comparedMonth(month, comparison === "mom" ? -1 : -12);
   return (
     <Card
       title={

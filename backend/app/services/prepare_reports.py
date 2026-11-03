@@ -9,10 +9,11 @@ from pathlib import Path
 from app.schemas.reports import HistoryFilter, ReportFilter
 from app.services.prepared_reports import PreparedReports
 from app.services.report_cache import data_root, encode_result
+from app.services.report_period import BASELINE_MONTH
 
 
-def prepare(root: Path) -> Path:
-    reports = PreparedReports(root)
+def prepare(root: Path, month: str = BASELINE_MONTH) -> Path:
+    reports = PreparedReports(root, month=month)
     ready = reports.cache.directory / "ready.json"
     if ready.exists():
         print("报告结果已准备，直接复用。", flush=True)
@@ -44,8 +45,18 @@ def prepare(root: Path) -> Path:
 def main() -> None:
     parser = argparse.ArgumentParser(description="预生成月度报告常用结果，不重新导入Excel")
     parser.add_argument("--data-dir", type=Path, default=data_root())
+    parser.add_argument("--month")
     args = parser.parse_args()
-    print(prepare(args.data_dir.resolve()))
+    root = args.data_dir.resolve()
+    months = (
+        [args.month]
+        if args.month
+        else sorted(p.stem.removeprefix("report-") for p in root.glob("report-*.json"))
+    )
+    if not months:
+        parser.error("尚未导入任何月份")
+    for month in months:
+        print(prepare(root, month))
 
 
 if __name__ == "__main__":

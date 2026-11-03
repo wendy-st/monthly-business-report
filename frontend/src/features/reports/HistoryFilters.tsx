@@ -1,3 +1,4 @@
+import { useReportMonth } from "./report-month";
 import { Button, Card, Select } from "antd";
 import type { HistoryView } from "./contracts";
 import { compareBusinessSites } from "./business-presentation";
@@ -20,16 +21,9 @@ export function HistoryFilters({
   value: HistorySelection;
   onChange: (update: Partial<HistorySelection>) => void;
 }) {
+  const { month } = useReportMonth();
   const { site, listing, years, yearBasis, periodScope } = value;
-  const availableYears = data?.years || [
-    "2026",
-    "2025",
-    "2024",
-    "2023",
-    "2022",
-    "2021",
-    "2020",
-  ];
+  const availableYears = data?.years || [month.slice(0, 4)];
   return (
     <Card size="small" className="history-filter-toolbar">
       <div className="history-filter-row">

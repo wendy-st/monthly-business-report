@@ -81,7 +81,7 @@ def overview_conclusions(
         current, base = item.current, item.base
         change = delta(current.get("profit"), base.get("profit"))
         result = (
-            f"9月净利润{period}{'增加' if change >= 0 else '减少'}{abs(change) / 10000:.2f}万。"
+            f"本月净利润{period}{'增加' if change >= 0 else '减少'}{abs(change) / 10000:.2f}万。"
             if change is not None
             else "净利润缺少可比金额，暂不能判断经营结果。"
         )

@@ -11,9 +11,10 @@ from app.services.financial_report import breakdown, select_facts
 from app.services.listing_report import listing_positions
 from app.services.overview_report import conversion_changes, regroup, revenue_order
 from app.services.report_dataset import ReportDataset
+from app.services.report_period import ReportPeriod
 
 CURRENCIES = {"US": "USD", "CA": "CAD", "MX": "MXN", "UK": "GBP", "JP": "JPY"}
-PERIODS = {"current": "2026-09", "previous": "2026-08", "year_ago": "2025-09"}
+PERIODS = ReportPeriod().fields
 
 
 def business_row(
@@ -21,6 +22,7 @@ def business_row(
     total: MetricRow,
     rates: dict[tuple[str, str], Decimal],
     *,
+    periods: dict[str, str] | None = None,
     category: str = "",
     position: str = "",
     subtotal: bool = False,
@@ -28,7 +30,7 @@ def business_row(
     site = row.dimensions.get("site", "")
     prices: dict[str, str | None] = {}
     deltas: dict[str, str | None] = {}
-    for period, month in PERIODS.items():
+    for period, month in (periods or PERIODS).items():
         amounts = getattr(row, period)
         fx = rates.get((month, site))
         price = ratio(
@@ -105,7 +107,7 @@ def business_details(
     categories: dict[tuple[str, str, str], set[str]] = {}
     for fact in facts:
         source = fact.source
-        if source.period == "2026-09":
+        if source.period == dataset.month:
             categories.setdefault((source.group, source.site, source.listing), set()).add(
                 source.category3
             )
@@ -114,6 +116,7 @@ def business_details(
             row,
             report.summary,
             rates,
+            periods=ReportPeriod(dataset.month).fields,
             category="、".join(
                 sorted(
                     categories.get(
@@ -140,7 +143,9 @@ def business_details(
         row for row in rows if (value := number(row.current["profit"])) is not None and value < 0
     ]
     scope_filters = filters.model_copy(update={"listing": "", "listing_site": "", "search": ""})
-    options = breakdown(select_facts(dataset, scope_filters), "listings")
+    options = breakdown(
+        select_facts(dataset, scope_filters), "listings", periods=ReportPeriod(dataset.month).months
+    )
     sites = report.options["site"]
     site_options = ["", "JP", "DE/IT/FR/ES", "UK"] if filters.group == "KAYO-欧日" else ["", *sites]
     scope = " / ".join(

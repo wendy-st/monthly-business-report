@@ -1,4 +1,4 @@
-"""9月LISTING展示分支只作用于本模块，不改变经营总览合计。"""
+"""LISTING展示分支只作用于本模块，不改变经营总览合计。"""
 
 from __future__ import annotations
 
@@ -21,8 +21,9 @@ from app.services.inventory_sources import InventoryFact, current_stock, matches
 from app.services.listing_financial_issues import financial_issues, retired_profit_issues
 from app.services.listing_inventory_issues import cleanup_issue, inventory_issues, stock_only_issues
 from app.services.report_dataset import ReportDataset
+from app.services.report_period import BASELINE_MONTH, ReportPeriod
 from app.services.seasonal_risk import SeasonalRisk, seasonal_risk
-from app.services.shipping_standards import shipping_identity
+from app.services.shipping_standards import shipping_identity, shipping_source
 
 SEPTEMBER_NEW_LISTINGS = {"RGA102", "RG810", "RG811", "RG812", "RG813", "RG814", "RG815", "RG816"}
 EXCLUDED_SITES = {"MX", "FR", "ES", "IT"}
@@ -63,11 +64,13 @@ def listing_positions(dataset: ReportDataset) -> dict[tuple[str, str, str], str]
 
 
 def listing_mode(
-    group: str, site: str, listing: str, position: str
+    group: str, site: str, listing: str, position: str, month: str = BASELINE_MONTH
 ) -> Literal["full", "promotion", "retired", "mx"]:
     if position in {"废弃", "已停运", "停运"}:
         return "retired"
-    if listing in SEPTEMBER_NEW_LISTINGS or group in {"HCM", "Ash"} and site == "UK":
+    if month == BASELINE_MONTH and (
+        listing in SEPTEMBER_NEW_LISTINGS or group in {"HCM", "Ash"} and site == "UK"
+    ):
         return "promotion"
     return "mx" if site == "MX" else "full"
 
@@ -84,7 +87,9 @@ def stockout_label(rows: list[FutureRow]) -> str:
 def listing_view(
     dataset: ReportDataset, filters: ReportFilter, turnover: list[InventoryFact]
 ) -> ListingView:
-    financial = breakdown(select_facts(dataset, filters), "listings")
+    financial = breakdown(
+        select_facts(dataset, filters), "listings", periods=ReportPeriod(dataset.month).months
+    )
     business = {
         (row.dimensions["group"], row.dimensions["site"], row.dimensions["listing"]): row
         for row in financial
@@ -96,7 +101,10 @@ def listing_view(
             (item.dimensions["group"], item.dimensions["site"], item.dimensions["listing"])
         ].append(item)
     positions = listing_positions(dataset)
-    readiness = all_readiness(dataset, shipping_identity())
+    readiness = all_readiness(
+        dataset,
+        shipping_identity(shipping_source(getattr(dataset, "directory", None), dataset.month)),
+    )
     turnover_by_listing: dict[tuple[str, str, str], list[InventoryFact]] = defaultdict(list)
     for item in turnover:
         if matches(item.dimensions, filters):
@@ -111,17 +119,21 @@ def listing_view(
         selected = ReportFilter(group=group, site=site, listing=listing)
         forecast, _ = future_rows(dataset, inventory[key], selected)
         basic = [row for row in forecast if row.scope == "所有仓库" and row.scenario == "基础"]
-        trend = turnover_rows(turnover_by_listing[key], selected)
-        september = next(
+        trend = turnover_rows(turnover_by_listing[key], selected, month=dataset.month)
+        current_turnover = next(
             (
                 row.values
                 for row in trend
-                if row.dimensions == {"scope": "所有仓库", "month": "2026-09"}
+                if row.dimensions == {"scope": "所有仓库", "month": dataset.month}
             ),
             {},
         )
         position = positions.get(key, "待补充")
-        if listing in SEPTEMBER_NEW_LISTINGS and position not in {"废弃", "已停运", "停运"}:
+        if (
+            dataset.month == BASELINE_MONTH
+            and listing in SEPTEMBER_NEW_LISTINGS
+            and position not in {"废弃", "已停运", "停运"}
+        ):
             position = "新品"
         metrics = business.get(key)
         stock = stock_row(
@@ -141,7 +153,7 @@ def listing_view(
         )
         if not has_current and not has_stock:
             continue
-        mode = listing_mode(group, site, listing, position)
+        mode = listing_mode(group, site, listing, position, dataset.month)
         if mode == "retired":
             if not has_activity and not has_stock:
                 continue
@@ -161,6 +173,7 @@ def listing_view(
                         stock,
                         trend,
                         [row for row in readiness if matches(row.dimensions, selected)],
+                        dataset.month,
                     ),
                 ]
             )
@@ -175,7 +188,7 @@ def listing_view(
                 issues=issues,
                 business=metrics,
                 inventory=stock,
-                turnover=september,
+                turnover=current_turnover,
                 future=basic,
                 stockout=stockout_label(basic),
                 seasonal=seasonal_risk(

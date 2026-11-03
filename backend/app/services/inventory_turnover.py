@@ -12,6 +12,7 @@ from app.services.inventory_sources import (
     turnover_facts,
 )
 from app.services.report_dataset import ReportDataset
+from app.services.report_period import BASELINE_MONTH, ReportPeriod
 
 SUFFIXES = {"qty": "quantity", "purchase": "purchase", "amount": "amount"}
 
@@ -21,17 +22,18 @@ def stock_key(item: InventoryFact) -> tuple[str, ...]:
 
 
 def replace_current_stock(
-    legacy: list[InventoryFact], stocks: list[InventoryFact]
+    legacy: list[InventoryFact], stocks: list[InventoryFact], *, month: str = BASELINE_MONTH
 ) -> list[InventoryFact]:
+    current_month, previous_month, _ = ReportPeriod(month).months
     scopes = {item.dimensions["warehouse"] for item in stocks}
     previous: dict[tuple[str, ...], list[InventoryFact]] = defaultdict(list)
     current: dict[tuple[str, ...], list[InventoryFact]] = defaultdict(list)
     output = []
     for item in legacy:
         month = item.dimensions["month"]
-        if month == "2026-08":
+        if month == previous_month:
             previous[stock_key(item)].append(item)
-        if month != "2026-09" or item.dimensions["warehouse"] not in scopes:
+        if month != current_month or item.dimensions["warehouse"] not in scopes:
             output.append(item)
         else:
             # 被覆盖的存量整仓移除；流量独立保留，避免漏掉已售罄的SKU。
@@ -67,4 +69,6 @@ def replace_current_stock(
 
 
 def build_turnover(dataset: ReportDataset) -> list[InventoryFact]:
-    return replace_current_stock(turnover_facts(dataset), current_stock(dataset, ReportFilter()))
+    return replace_current_stock(
+        turnover_facts(dataset), current_stock(dataset, ReportFilter()), month=dataset.month
+    )

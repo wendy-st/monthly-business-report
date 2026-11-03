@@ -8,7 +8,12 @@ from app.services.inventory_forecast import forecast_amounts
 from app.services.inventory_readiness import assess_sku
 from app.services.inventory_sources import InventoryFact
 from app.services.report_dataset import ReportDataset
-from app.services.shipping_standards import average_standard, shipping_identity, shipping_index
+from app.services.shipping_standards import (
+    average_standard,
+    shipping_identity,
+    shipping_index,
+    shipping_source,
+)
 
 
 @lru_cache(maxsize=1)
@@ -28,7 +33,13 @@ def scope_assessment(
     dataset: ReportDataset, stocks: list[InventoryFact], filters: ReportFilter
 ) -> InventoryRow:
     dimensions = {name: getattr(filters, name) for name in ("group", "site", "listing", "style")}
-    standard, count = average_standard(shipping_index(shipping_identity()), dimensions)
+    standard, count = average_standard(
+        shipping_index(
+            shipping_identity(shipping_source(getattr(dataset, "directory", None), dataset.month)),
+            shipping_source(getattr(dataset, "directory", None), dataset.month),
+        ),
+        dimensions,
+    )
     forecast, _ = forecast_amounts(dataset, filters, allowed_listings=active_listings(dataset))
     result = assess_sku(dimensions, stocks, forecast, standard, "SKU等权平均向上取整")
     result.values["standard_sku_count"] = str(count)

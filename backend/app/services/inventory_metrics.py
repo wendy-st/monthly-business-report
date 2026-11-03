@@ -9,6 +9,7 @@ from app.schemas.inventory import InventoryRow
 from app.schemas.reports import ReportFilter
 from app.services.financial_model import Amounts, combine, ratio, serialize
 from app.services.inventory_sources import InventoryFact, matches, sum_amounts
+from app.services.report_period import BASELINE_MONTH
 
 
 def stock_row(facts: list[InventoryFact], key: str, dimensions: dict[str, str]) -> InventoryRow:
@@ -46,8 +47,15 @@ def add_turnover(values: Amounts, days: int) -> Amounts:
 
 
 def turnover_rows(
-    facts: list[InventoryFact], filters: ReportFilter, *, available_months: set[str] | None = None
+    facts: list[InventoryFact],
+    filters: ReportFilter,
+    *,
+    available_months: set[str] | None = None,
+    month: str = BASELINE_MONTH,
 ) -> list[InventoryRow]:
+    year, cutoff = map(int, month.split("-"))
+    years = (year - 1, year)
+    current = month
     selected = [item for item in facts if matches(item.dimensions, filters)]
     output = []
     for scope in ("所有仓库", "FBA+海外仓"):
@@ -57,7 +65,7 @@ def turnover_rows(
                 by_month[item.dimensions["month"]].append(item)
         monthly_values: dict[str, Amounts] = {}
         for month, items in sorted(by_month.items()):
-            if month[:4] not in {"2025", "2026"} or month > "2026-09":
+            if int(month[:4]) not in years or month > current:
                 continue
             year, monthly = map(int, month.split("-"))
             values = add_turnover(sum_amounts(items), calendar.monthrange(year, monthly)[1])
@@ -71,11 +79,11 @@ def turnover_rows(
                     source_rows=[],
                 )
             )
-        for year in (2025, 2026):
-            periods = [monthly_values.get(f"{year}-{month:02}") for month in range(1, 10)]
+        for year in years:
+            periods = [monthly_values.get(f"{year}-{month:02}") for month in range(1, cutoff + 1)]
             # 来源期间完整时，对象无记录不等于来源缺失；原版按该对象有记录月份取均值。
             if available_months is not None and all(
-                f"{year}-{month:02}" in available_months for month in range(1, 10)
+                f"{year}-{month:02}" in available_months for month in range(1, cutoff + 1)
             ):
                 periods = [item for item in periods if item is not None]
             values = {}
@@ -89,11 +97,11 @@ def turnover_rows(
                 values[f"flow_{suffix}"] = combine(
                     item.get(f"flow_{suffix}") if item else None for item in periods
                 )
-            days = sum(calendar.monthrange(year, month)[1] for month in range(1, 10))
+            days = sum(calendar.monthrange(year, month)[1] for month in range(1, cutoff + 1))
             output.append(
                 InventoryRow(
                     key=f"{scope}|{year}-YTD",
-                    label=f"{year}年1—9月累计",
+                    label=f"{year}年1—{cutoff}月累计",
                     dimensions={"scope": scope, "month": f"{year}-YTD"},
                     values=serialize(add_turnover(values, days)),
                     source_rows=[],

@@ -105,8 +105,8 @@ def inventory_view(
     breakdowns["category3"].sort(
         key=lambda row: Decimal(row.values.get("quantity") or "0"), reverse=True
     )
-    trend = turnover_rows(turnover, filters)
-    kpis = inventory_kpis(trend)
+    trend = turnover_rows(turnover, filters, month=dataset.month)
+    kpis = inventory_kpis(trend, dataset.month)
     active = active_listings(dataset)
     seasonal_stocks = [item for item in stocks if listing_key(item.dimensions) in active]
     seasonal_facts = [
@@ -152,7 +152,7 @@ def inventory_view(
         turnover=trend,
         future=future,
         warnings=warnings,
-        source_note="来源：经营工作簿库存数据及产品基础信息、2025/2026库存周转表、MSKU销量预估表、库存发货天数表。库存状况按在售LISTING/款式汇总核算，标准天数按源表SKU等权平均向上取整；270天以上占比仅统计FBA在库。",
+        source_note="来源：经营工作簿库存数据及产品基础信息、本年及上年库存周转表、MSKU销量预估表、库存发货天数表。库存状况按在售LISTING/款式汇总核算，标准天数按源表SKU等权平均向上取整；270天以上占比仅统计FBA在库。",
         seasonal=seasonal,
         seasonal_styles=styles,
         seasonal_group=group_season(
@@ -167,9 +167,9 @@ def inventory_view(
         kpis=kpis,
         options=options,
         conclusions=[
-            f"截至2026-09，所有仓库库存数量{Decimal(kpis[1].current or '0'):,.0f}件、"
+            f"截至{dataset.month}，所有仓库库存数量{Decimal(kpis[1].current or '0'):,.0f}件、"
             f"库存资金{Decimal(kpis[0].current or '0') / 10000:,.1f}万元。",
-            f"9月所有仓库周转{Decimal(kpis[2].current or '0'):.1f}天，"
+            f"{int(dataset.month[5:])}月所有仓库周转{Decimal(kpis[2].current or '0'):.1f}天，"
             f"FBA+海外仓周转{Decimal(kpis[3].current or '0'):.1f}天。",
             "未来支持天数按无新增补货、预测销量逐月扣减测算。",
         ]

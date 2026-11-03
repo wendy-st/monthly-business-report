@@ -11,6 +11,7 @@ from app.schemas.reports import ReportFilter
 from app.services.financial_model import Amounts, combine, number
 from app.services.inventory_styles import style_name
 from app.services.report_dataset import ReportDataset
+from app.services.report_period import shift_month as shift_month
 from app.services.source_import import SourceRecord
 
 WAREHOUSES = {"FBA仓", "海外仓", "本地仓"}
@@ -63,7 +64,7 @@ def inventory_dimensions(dataset: ReportDataset, source: SourceRecord) -> dict[s
         "style": source.style
         or (
             style_name(dataset, source.site, source.listing, source.sku, source.msku)
-            if source.period == "2026-09"
+            if source.period == dataset.month
             else ""
         ),
         "asin": source.raw.get("ASIN") or "",
@@ -84,7 +85,7 @@ def current_stock(dataset: ReportDataset, filters: ReportFilter) -> list[Invento
     result = []
     for source in dataset.records("current_inventory"):
         values = inventory_dimensions(dataset, source)
-        if source.period != "2026-09" or not matches(values, filters):
+        if source.period != dataset.month or not matches(values, filters):
             continue
         if values["warehouse"] not in WAREHOUSES:
             continue
@@ -115,12 +116,6 @@ def current_stock(dataset: ReportDataset, filters: ReportFilter) -> list[Invento
                 amounts[key] = Decimal(0)
         result.append(InventoryFact(values, amounts, source))
     return result
-
-
-def shift_month(month: str, offset: int) -> str:
-    year, monthly = map(int, month.split("-"))
-    index = year * 12 + monthly - 1 + offset
-    return f"{index // 12:04}-{index % 12 + 1:02}"
 
 
 def turnover_source_amounts(source: SourceRecord) -> Amounts:

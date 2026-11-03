@@ -11,7 +11,7 @@ from app.services.inventory_readiness import all_readiness, readiness_summary
 from app.services.inventory_seasons import season_context
 from app.services.inventory_sources import matches
 from app.services.report_dataset import ReportDataset
-from app.services.shipping_standards import shipping_identity
+from app.services.shipping_standards import shipping_identity, shipping_source
 
 
 def turnover_health(value: Decimal | None) -> str:
@@ -42,7 +42,12 @@ def seasonal_risk(
     if assessment is None:
         skus = [
             row
-            for row in all_readiness(dataset, shipping_identity())
+            for row in all_readiness(
+                dataset,
+                shipping_identity(
+                    shipping_source(getattr(dataset, "directory", None), dataset.month)
+                ),
+            )
             if matches(row.dimensions, filters)
         ]
         summary, issues = readiness_summary(skus)

@@ -1,3 +1,4 @@
+import { BASELINE_MONTH } from "./report-month";
 import type { EChartsCoreOption } from "echarts/core";
 import type { FutureRow, InventoryRow } from "./contracts";
 import { tooltipValue } from "../../shared/report/format";
@@ -10,12 +11,30 @@ export function turnoverOption(
   rows: InventoryRow[],
   field: string,
   sharedMax: number,
+  currentYear = BASELINE_MONTH.slice(0, 4),
 ): EChartsCoreOption {
+  const previousYear = String(Number(currentYear) - 1);
   const series = [
-    { year: "2025", scope: "所有仓库", color: inventoryColors.priorTotal },
-    { year: "2025", scope: "FBA+海外仓", color: inventoryColors.priorFba },
-    { year: "2026", scope: "所有仓库", color: inventoryColors.currentTotal },
-    { year: "2026", scope: "FBA+海外仓", color: inventoryColors.currentFba },
+    {
+      year: previousYear,
+      scope: "所有仓库",
+      color: inventoryColors.priorTotal,
+    },
+    {
+      year: previousYear,
+      scope: "FBA+海外仓",
+      color: inventoryColors.priorFba,
+    },
+    {
+      year: currentYear,
+      scope: "所有仓库",
+      color: inventoryColors.currentTotal,
+    },
+    {
+      year: currentYear,
+      scope: "FBA+海外仓",
+      color: inventoryColors.currentFba,
+    },
   ];
   return {
     tooltip: { trigger: "axis", valueFormatter: tooltipValue("天") },
@@ -28,8 +47,8 @@ export function turnoverOption(
         itemHeight: 8,
         lineStyle: {
           color,
-          width: year === "2025" ? 2.4 : 3.2,
-          type: year === "2025" ? [9, 7] : "solid",
+          width: year === previousYear ? 2.4 : 3.2,
+          type: year === previousYear ? [9, 7] : "solid",
         },
         textStyle: { color: inventoryColors.legend, fontSize: 12 },
         data: [`${year} ${scope}`],
@@ -65,19 +84,19 @@ export function turnoverOption(
       name: `${year} ${scope}`,
       type: "line",
       symbol: "circle",
-      symbolSize: year === "2025" ? 6 : 8,
+      symbolSize: year === previousYear ? 6 : 8,
       showAllSymbol: true,
       connectNulls: true,
       itemStyle: { color },
       lineStyle: {
         color,
-        width: year === "2025" ? 2.4 : 3.2,
-        type: year === "2025" ? [9, 7] : "solid",
+        width: year === previousYear ? 2.4 : 3.2,
+        type: year === previousYear ? [9, 7] : "solid",
         cap: "round",
         join: "round",
       },
       label: {
-        show: year === "2026",
+        show: year === currentYear,
         position: scope === "所有仓库" ? "top" : "bottom",
         distance: scope === "所有仓库" ? 5 : 3,
         fontSize: 10,

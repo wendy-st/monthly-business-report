@@ -52,7 +52,9 @@ def cell_value(cell: ET.Element, strings: list[str]) -> str | None:
     return strings[int(value.text)] if kind == "s" else value.text
 
 
-def read_rows(path: Path, sheet: str, header_row: int) -> Iterator[tuple[int, RawRow]]:
+def read_rows(
+    path: Path, sheet: str, header_row: int, required: set[str] | None = None
+) -> Iterator[tuple[int, RawRow]]:
     """保留交易原行，不按业务键去重；重复表头仅取首次列名。"""
     with ZipFile(path) as archive:
         strings = shared_strings(archive)
@@ -71,6 +73,9 @@ def read_rows(path: Path, sheet: str, header_row: int) -> Iterator[tuple[int, Ra
                     headers = {
                         column: normalize_header(value) for column, value in cells.items() if value
                     }
+                    missing = (required or set()) - set(headers.values())
+                    if missing:
+                        raise ValueError(f"{path.name}/{sheet}缺少字段：{sorted(missing)}")
                 elif index > header_row and any(value is not None for value in cells.values()):
                     record: RawRow = {}
                     for column, name in headers.items():

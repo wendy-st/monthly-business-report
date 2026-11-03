@@ -28,7 +28,7 @@ def fallback_commission(periods: dict[str, Amounts], month: str) -> Decimal | No
     return next(
         (
             rate
-            for period in (month, "2026-09", "2026-08", "2025-09")
+            for period in dict.fromkeys((month, *sorted(periods, reverse=True)))
             if (rate := commission_ratio(periods.get(period, {}))) not in (None, Decimal(0))
         ),
         None,

@@ -13,6 +13,7 @@ from app.services.source_import import record
 
 def test_active_listings_only_accept_maintained_and_new_positions() -> None:
     dataset = Mock(spec=ReportDataset)
+    dataset.month = "2026-09"
     dataset.records.return_value = [
         record(
             "source.xlsx",
@@ -27,6 +28,7 @@ def test_active_listings_only_accept_maintained_and_new_positions() -> None:
 
 def test_normal_diagnosis_is_not_counted_as_warning_just_because_it_has_explanation() -> None:
     dataset = Mock(spec=ReportDataset)
+    dataset.month = "2026-09"
     dataset.manifest = {"report_month": "2026-09"}
     assessment = assess_sku({"group": "A", "site": "US", "listing": "X"}, [], {}, {}, "标准待补充")
     assessment.dimensions.update(issues="", notes="", diagnosis="整体库存正常")
@@ -41,6 +43,7 @@ def test_normal_diagnosis_is_not_counted_as_warning_just_because_it_has_explanat
 
 def test_listing_recalculates_from_totals_and_style_hides_zero_stock_skus() -> None:
     dataset = Mock(spec=ReportDataset)
+    dataset.month = "2026-09"
     dataset.manifest = {"report_month": "2026-09"}
     dimensions = {
         "group": "A",

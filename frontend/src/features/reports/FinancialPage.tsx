@@ -101,7 +101,7 @@ export function FinancialPage({
               >
                 <ul className="conclusion-list">
                   <li>
-                    9月净销售额
+                    本月净销售额
                     {format(data.summary.current.revenue, 2, 10000)}
                     万元，净利润
                     {format(data.summary.current.profit, 2, 10000)}

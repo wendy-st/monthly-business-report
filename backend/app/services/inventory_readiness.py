@@ -18,7 +18,7 @@ from app.services.inventory_forecast import covered_days, forecast_records
 from app.services.inventory_sources import InventoryFact, current_stock
 from app.services.inventory_styles import normalized_sku
 from app.services.report_dataset import ReportDataset
-from app.services.shipping_standards import find_standard, shipping_index
+from app.services.shipping_standards import find_standard, shipping_index, shipping_source
 from app.services.workbook_reader import RawRow
 
 SkuKey = tuple[str, str, str, str]
@@ -144,7 +144,9 @@ def all_readiness(dataset: ReportDataset, identity: str) -> list[InventoryRow]:
             forecasts[key][month] = (
                 prior + value if prior is not None and value is not None else None
             )
-    standards = shipping_index(identity)
+    standards = shipping_index(
+        identity, shipping_source(getattr(dataset, "directory", None), dataset.month)
+    )
     output = []
     for key in sorted(stocks.keys() | forecasts.keys()):
         dims, items, forecast = dimensions[key], stocks[key], forecasts[key]

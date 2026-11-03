@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button, Card, Input, Select } from "antd";
+import { monthLabel, useReportMonth } from "./report-month";
 import type { Filters } from "./contracts";
 
 const dimensions = [
@@ -34,6 +35,7 @@ export function FinancialFilters({
   fixedGroup: boolean;
   onChange: (next: Filters) => void;
 }) {
+  const { month } = useReportMonth();
   const [search, setSearch] = useState(filters.search ?? "");
   function select(key: string, value: string) {
     const next = { ...filters, [key]: value };
@@ -52,8 +54,8 @@ export function FinancialFilters({
             aria-label="产品月份"
             size="small"
             disabled
-            value="2026-09"
-            options={[{ value: "2026-09", label: "2026年9月" }]}
+            value={month}
+            options={[{ value: month, label: monthLabel(month) }]}
           />
         </label>
       )}

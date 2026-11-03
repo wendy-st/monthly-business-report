@@ -1,14 +1,9 @@
+import { useReportMonth, comparedMonth } from "./report-month";
 import { useState } from "react";
 import { Card, Select } from "antd";
 import type { BusinessRow } from "./business-contracts";
 import { format } from "./presentation";
 import { businessPercent, compareBusinessSites } from "./business-presentation";
-
-const periods = [
-  ["year_ago", "2025-09"],
-  ["previous", "2026-08"],
-  ["current", "本月"],
-] as const;
 
 function ReturnTrend({ row }: { row: BusinessRow }) {
   return ["mom", "yoy"].map((mode, index) => {
@@ -41,6 +36,12 @@ function ReturnTrend({ row }: { row: BusinessRow }) {
 }
 
 export function BusinessPriceMatrix({ rows }: { rows: BusinessRow[] }) {
+  const { month } = useReportMonth();
+  const periods = [
+    ["year_ago", comparedMonth(month, -12)],
+    ["previous", comparedMonth(month, -1)],
+    ["current", "本月"],
+  ] as const;
   const [sort, setSort] = useState("return");
   const ordered = [...rows].sort((a, b) => {
     const key = sort === "return" ? "return_rate" : "revenue";

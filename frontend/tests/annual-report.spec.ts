@@ -137,7 +137,7 @@ test("错误可重试，源表名称与LISTING特殊字符按文本展示", asyn
     .getByRole("menuitem", { name: "年度经营分析", exact: true })
     .click();
   await expect(
-    page.getByText("9月数据尚未就绪，请启动后端或完成本地导入。"),
+    page.getByText("数据尚未就绪，请启动后端或完成本地导入。"),
   ).toBeVisible();
   fail = false;
   await page.getByRole("button", { name: /^重\s*试$/ }).click();

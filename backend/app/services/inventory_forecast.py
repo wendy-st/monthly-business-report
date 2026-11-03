@@ -19,7 +19,7 @@ from app.services.report_dataset import ReportDataset
 def forecast_categories(dataset: ReportDataset) -> dict[tuple[str, str], set[tuple[str, str, str]]]:
     categories: dict[tuple[str, str], set[tuple[str, str, str]]] = defaultdict(set)
     for source in dataset.records("current_inventory") + dataset.records("operating"):
-        if source.period == "2026-09":
+        if source.period == dataset.month:
             mapped = inventory_categories(dataset).get((source.site, source.listing), {})
             path = tuple(
                 mapped.get(field, getattr(source, field))
@@ -45,7 +45,7 @@ def forecast_records(
     records = []
     unmatched = 0
     for source in dataset.records("forecast"):
-        group, status = dataset.resolve("2026-09", source.site, source.msku)
+        group, status = dataset.resolve(dataset.month, source.site, source.msku)
         reference = mapping.get(
             (source.raw.get("负责人") or "", source.site, source.listing), set()
         )
@@ -81,7 +81,7 @@ def forecast_records(
                 year, monthly = field.removesuffix("月").split("年")
                 month = f"{int(year):04}-{int(monthly):02}"
             else:
-                month = f"2026-{int(field.removesuffix('月')):02}"
+                month = f"{dataset.month[:4]}-{int(field.removesuffix('月')):02}"
             demand = number(value)
             amounts[month] = max(demand, ZERO) if demand is not None else None
         records.append((dimensions, amounts))
@@ -113,7 +113,7 @@ def forecast_amounts(
         if not matches(dimensions, filters):
             continue
         for month, demand in amounts.items():
-            if future_only and month <= "2026-09":
+            if future_only and month <= dataset.month:
                 continue
             if demand is None or (month in output and output[month] is None):
                 output[month] = None

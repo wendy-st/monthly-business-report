@@ -68,6 +68,7 @@ def test_new_object_ytd_uses_existing_months_when_source_periods_are_complete() 
 
 def test_confirmed_blank_sku_mapping_resolves_each_listed_msku() -> None:
     dataset = Mock(spec=ReportDataset)
+    dataset.month = "2026-09"
     source = record(
         "全小组2026-09.xlsx",
         "待补充映射",
@@ -84,6 +85,7 @@ def test_confirmed_blank_sku_mapping_resolves_each_listed_msku() -> None:
 
 def test_current_style_mapping_does_not_rewrite_historical_blank_style() -> None:
     dataset = Mock(spec=ReportDataset)
+    dataset.month = "2026-09"
     dataset.external_group.return_value = ("A", "SOURCE_GROUP_FALLBACK")
     source = record(
         "全小组2026-09.xlsx",
@@ -112,6 +114,7 @@ def test_age_ratio_uses_whole_fba_denominator() -> None:
 
 def test_abnormal_fba_records_are_excluded_from_all_current_stock_amounts() -> None:
     dataset = Mock(spec=ReportDataset)
+    dataset.month = "2026-09"
     dataset.records.return_value = [
         record(
             "source.xlsx",
@@ -234,6 +237,7 @@ def test_season_reference_outside_window_stays_unavailable() -> None:
         ),
     ):
         dataset = Mock(spec=ReportDataset)
+        dataset.month = "2026-09"
         dataset.manifest = {"report_month": "2026-09"}
         result = seasonal_risk(
             dataset,

@@ -8,6 +8,12 @@ import { AnnualPage } from "../features/reports/AnnualPage";
 import { InventoryPage } from "../features/reports/InventoryPage";
 import { ListingPage } from "../features/reports/ListingPage";
 import { SourcesPage } from "../features/reports/SourcesPage";
+import {
+  ReportMonthProvider,
+  useReportMonth,
+  monthLabel,
+  comparedMonth,
+} from "../features/reports/report-month";
 import { useReport } from "../features/reports/api";
 
 const groupOrder = ["LZF", "HCM", "Ash", "KAYO-北美", "KAYO-欧日", "薄底水鞋"];
@@ -18,6 +24,16 @@ const ItkPage = lazy(() =>
 );
 
 export function LiveReportApp() {
+  return (
+    <ReportMonthProvider>
+      <LiveReportContent />
+    </ReportMonthProvider>
+  );
+}
+
+function LiveReportContent() {
+  const { month, months, setMonth, monthsError, refreshMonths } =
+    useReportMonth();
   const body = useReportHeaderOffset();
   const [page, setPage] = useState("overview");
   const [group, setGroup] = useState("LZF");
@@ -38,27 +54,31 @@ export function LiveReportApp() {
     }
   }
   return (
-    <Layout className="app-layout live-report" data-report-month="2026-09">
+    <Layout className="app-layout live-report" data-report-month={month}>
       <Layout.Sider width={228} className="report-sidebar">
         <div className="sidebar-heading">
           <div className="sidebar-logo">SEEKWAY</div>
           <div className="sidebar-title">经营分析报告</div>
           <div className="report-period">
-            2026年9月
+            {monthLabel(month)}
             <br />
-            环比：2026年8月
+            环比：{monthLabel(comparedMonth(month, -1))}
             <br />
-            同比：2025年9月
+            同比：{monthLabel(comparedMonth(month, -12))}
           </div>
           <label className="month-control">
             报告月份
             <select
               aria-label="报告月份"
               className="report-month-select"
-              value="2026-09"
-              onChange={() => undefined}
+              value={month}
+              onChange={(event) => setMonth(event.target.value)}
             >
-              <option value="2026-09">2026年9月</option>
+              {months.map((value) => (
+                <option key={value} value={value}>
+                  {monthLabel(value)}
+                </option>
+              ))}
             </select>
           </label>
         </div>
@@ -85,7 +105,7 @@ export function LiveReportApp() {
         <header className="report-header">
           <div>
             <Typography.Title level={1}>
-              2026年9月月度经营分析报告
+              {monthLabel(month)}月度经营分析报告
             </Typography.Title>
             <Typography.Text type="secondary">
               {page === "itk"
@@ -94,10 +114,17 @@ export function LiveReportApp() {
             </Typography.Text>
           </div>
           <Tag className="preview-label" color="processing">
-            9月真实数据 · 待核对
+            {Number(month.slice(5))}月真实数据 · 待核对
           </Tag>
         </header>
-        <Layout.Content className="page-content">
+        <Layout.Content className="page-content" key={month}>
+          {monthsError && (
+            <Alert
+              type="error"
+              title={monthsError}
+              action={<Button onClick={refreshMonths}>重试月份列表</Button>}
+            />
+          )}
           {metadata.error && (
             <Alert
               type="error"
@@ -133,13 +160,13 @@ export function LiveReportApp() {
           本期、环比、同比经营数据均来自经营底表，利润按收入和有符号费用重算；历史看板保留历史LISTING结果表中的冻结利润，不混用两条路径。
         </Typography.Paragraph>
         <Typography.Paragraph>
-          库存规模、金额、结构、库龄和未来支持起点使用经营工作簿“库存数据”。库存周转天数的期初、期末和销售流量单独使用2025、2026库存周转表。未来需求使用已有预测结果，不假定新增补货。
+          库存规模、金额、结构、库龄和未来支持起点使用经营工作簿“库存数据”。库存周转天数的期初、期末和销售流量单独使用报告当年及上年库存周转表。未来需求使用已有预测结果，不假定新增补货。
         </Typography.Paragraph>
         <Typography.Paragraph>
           实际、剔价、剔价剔退款分别核算。缺记录、缺字段、零分母和还原依据不足保留不可计算状态；原始Excel未重算，外链未刷新。
         </Typography.Paragraph>
         <Typography.Paragraph>
-          LISTING分析问题清单按小组、站点、LISTING归总经营归因与库存健康，排除MX/FR/ES/IT；停运、废弃仅分析利润侵蚀及库存清理。经营总览仍保留全部站点。其他月份待导入后开放。
+          LISTING分析问题清单按小组、站点、LISTING归总经营归因与库存健康，排除MX/FR/ES/IT，LZF仅分析US；停运、废弃仅分析利润侵蚀及库存清理。经营总览仍保留全部站点。其他月份待导入后开放。
         </Typography.Paragraph>
       </Modal>
     </Layout>

@@ -82,7 +82,7 @@ export function exportUrl(
   scope: Scope,
   extra: Record<string, unknown> = {},
 ) {
-  return `/api/reports/2026-09/itk/${kind}.csv?${params({ ...scope, ...extra })}`;
+  return `/api/itk/${kind}.csv?${params({ ...scope, ...extra })}`;
 }
 export function dateChange<T extends Scope>(
   scope: T,

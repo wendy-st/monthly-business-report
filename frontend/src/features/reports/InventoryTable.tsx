@@ -20,8 +20,8 @@ const labels: Record<string, string> = {
   days_qty: "库存周转天数",
   days_purchase: "金额周转（不含头程，天）",
   days_amount: "金额周转（含头程，天）",
-  sales_units: "9月销量",
-  ytd_days_qty: "1—9月周转天数",
+  sales_units: "本月销量",
+  ytd_days_qty: "本年累计周转天数",
   mom_days_qty: "环比",
   yoy_days_qty: "同比",
   purchase_share: "采购占比",
@@ -108,7 +108,7 @@ export function InventoryTable({
             ...fields.map((key) => ({
               title:
                 key === "days_qty" && !compact
-                  ? "9月周转天数"
+                  ? "本月周转天数"
                   : (labels[key] ?? key),
               key,
               align: "right" as const,

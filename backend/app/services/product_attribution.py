@@ -4,8 +4,9 @@ from decimal import Decimal
 
 from app.schemas.products import ProductCostComparison
 from app.services.financial_model import Amounts, aggregate, combine, ratio, serialize
-from app.services.financial_report import PERIODS, group_facts
+from app.services.financial_report import group_facts
 from app.services.report_dataset import OperatingFact
+from app.services.report_period import BASELINE_MONTH, ReportPeriod
 
 COST_KEYS = ("purchase", "freight", "other_cost")
 ZERO = Decimal(0)
@@ -82,13 +83,14 @@ def conclusion(values: dict[str, Decimal | None], filtered: bool) -> list[str]:
 
 
 def attribute_costs(
-    facts: list[OperatingFact], month: str, filtered: bool
+    facts: list[OperatingFact], month: str, filtered: bool, *, current_month: str = BASELINE_MONTH
 ) -> ProductCostComparison:
+    report_periods = ReportPeriod(current_month).months
     values: dict[str, Decimal | None] = dict.fromkeys((*PARTS, *COUNTS, "known_delta"), ZERO)
     for pool in group_facts(facts, "styles").values():
         periods = [
             [fact for fact in pool if fact.source.period == period]
-            for period in (PERIODS[0], month)
+            for period in (report_periods[0], month)
         ]
         if not any(periods):
             continue
@@ -113,7 +115,7 @@ def attribute_costs(
         for key, amount in parts.items():
             values[key] = (values[key] or ZERO) + amount
         values["comparable_count"] = (values["comparable_count"] or ZERO) + int(comparable)
-    total = aggregate(fact.amounts for fact in facts if fact.source.period == PERIODS[0])
+    total = aggregate(fact.amounts for fact in facts if fact.source.period == report_periods[0])
     values["current_amount"] = combine(total.get(key) for key in COST_KEYS)
     values["actual_delta"] = values["known_delta"] if values["missing_count"] == 0 else None
     values["renamed_source_rows"] = Decimal(
@@ -123,10 +125,10 @@ def attribute_costs(
     if abs(parts_total - (values["known_delta"] or ZERO)) > Decimal("0.00000001"):
         raise ValueError("成本归因与实际金额变化不闭合")
     lines = conclusion(values, filtered)
-    label = "环比" if month == PERIODS[1] else "同比"
+    label = "环比" if month == report_periods[1] else "同比"
     lines = [line.replace("三项实际成本变动", f"三项实际成本{label}变动") for line in lines]
     current_styles = group_facts(
-        [fact for fact in facts if fact.source.period == PERIODS[0]], "styles"
+        [fact for fact in facts if fact.source.period == report_periods[0]], "styles"
     )
     if len(current_styles) == 1:
         base_amounts = aggregate(fact.amounts for fact in facts if fact.source.period == month)

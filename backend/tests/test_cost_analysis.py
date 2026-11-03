@@ -92,6 +92,7 @@ def test_refund_detail_has_priority_and_mixed_rows_are_not_presumed_split() -> N
 
 def test_history_unit_cost_never_uses_future_period() -> None:
     dataset = ReportDataset.__new__(ReportDataset)
+    dataset.manifest = {"report_month": "2026-09"}
     dataset.cache = {"history": []}
     past = financials(sample(销售数量="10", 销售成本="50", 头程运费="20"))
     zero = financials(sample(销售数量="10", 销售成本="0", 头程运费="0"))
@@ -177,6 +178,7 @@ def source(month: str, raw: dict[str, str | None]) -> SourceRecord:
 
 def comparison_dataset(current: SourceRecord, base: list[SourceRecord]) -> ReportDataset:
     dataset = ReportDataset.__new__(ReportDataset)
+    dataset.manifest = {"report_month": "2026-09"}
     dataset.operating = [
         OperatingFact(s, financials(s.raw), "SOURCE_PERIOD_GROUP") for s in [current, *base]
     ]

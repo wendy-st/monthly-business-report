@@ -18,8 +18,9 @@ from app.services.financial_model import (
 )
 from app.services.product_diagnosis import diagnose_styles
 from app.services.report_dataset import OperatingFact, ReportDataset
+from app.services.report_period import ReportPeriod
 
-PERIODS = ("2026-09", "2026-08", "2025-09")
+PERIODS = ReportPeriod().months
 DIMENSIONS = ("group", "site", "category1", "category2", "category3", "listing", "style")
 GRAINS = {
     "groups": ("group",),
@@ -67,7 +68,7 @@ def select_facts(dataset: ReportDataset, filters: ReportFilter) -> list[Operatin
     if not filters.result:
         return result
     # 盈亏以本期款式集合确定，比较期只追溯同一集合，不按历史盈亏再次筛选。
-    pools = group_facts([fact for fact in result if fact.source.period == PERIODS[0]], "styles")
+    pools = group_facts([fact for fact in result if fact.source.period == dataset.month], "styles")
     selected = set()
     for key, facts in pools.items():
         profit = aggregate(fact.amounts for fact in facts)["profit"]
@@ -91,13 +92,18 @@ def group_facts(
 
 
 def metric_row(
-    facts: list[OperatingFact], key: str, label: str, values: dict[str, str] | None = None
+    facts: list[OperatingFact],
+    key: str,
+    label: str,
+    values: dict[str, str] | None = None,
+    *,
+    periods: tuple[str, str, str] = PERIODS,
 ) -> MetricRow:
     amounts = [
         aggregate(fact.amounts for fact in facts if fact.source.period == month)
-        for month in PERIODS
+        for month in periods
     ]
-    current = [fact for fact in facts if fact.source.period == PERIODS[0]]
+    current = [fact for fact in facts if fact.source.period == periods[0]]
     status = "OK" if current else "NO_RECORD"
     if current and any(amounts[0][name] is None for name in ("revenue", "profit", "units")):
         status = "DATA_MISSING"
@@ -140,10 +146,16 @@ def changes(amounts: list[Amounts]) -> dict[str, str | None]:
     return output
 
 
-def breakdown(facts: list[OperatingFact], grain: str) -> list[MetricRow]:
+def breakdown(
+    facts: list[OperatingFact], grain: str, *, periods: tuple[str, str, str] = PERIODS
+) -> list[MetricRow]:
     rows = [
         metric_row(
-            items, "|".join(key), " / ".join(key), dict(zip(GRAINS[grain], key, strict=True))
+            items,
+            "|".join(key),
+            " / ".join(key),
+            dict(zip(GRAINS[grain], key, strict=True)),
+            periods=periods,
         )
         for key, items in group_facts(facts, grain).items()
     ]
@@ -193,32 +205,37 @@ def waterfall(current: Amounts, base: Amounts) -> list[WaterfallStep]:
 
 def financial_view(dataset: ReportDataset, filters: ReportFilter) -> FinancialView:
     facts = select_facts(dataset, filters)
-    summary = metric_row(facts, "summary", "当前范围")
+    periods = ReportPeriod(dataset.month).months
+    summary = metric_row(facts, "summary", "当前范围", periods=periods)
     per_period = {
         month: aggregate(fact.amounts for fact in facts if fact.source.period == month)
-        for month in PERIODS
+        for month in periods
     }
     warnings = []
     if summary.status == "DATA_MISSING":
         warnings.append("存在缺失数值，受影响利润项不可计算；请在来源核验中检查字段。")
     if any(fact.source.group == "未分配" for fact in facts):
         warnings.append("包含责任归属未分配记录，保留在公司合计，不自动分摊。")
-    breakdowns = {name: breakdown(facts, name) for name in GRAINS}
+    breakdowns = {name: breakdown(facts, name, periods=periods) for name in GRAINS}
     diagnoses = product_diagnoses(dataset)
     for row in breakdowns["styles"]:
         row.diagnosis = diagnoses.get(row.key, "待核验")
     return FinancialView(
+        report_month=dataset.month,
         summary=summary,
         series=[
             metric_row(
-                [fact for fact in facts if fact.source.period == month], month, month
+                [fact for fact in facts if fact.source.period == month],
+                month,
+                month,
+                periods=periods,
             ).model_copy(update={"current": serialize(per_period[month])})
-            for month in reversed(PERIODS)
+            for month in reversed(periods)
         ],
         breakdowns=breakdowns,
         waterfall={
-            kind: waterfall(per_period[PERIODS[0]], per_period[month])
-            for kind, month in (("mom", PERIODS[1]), ("yoy", PERIODS[2]))
+            kind: waterfall(per_period[periods[0]], per_period[month])
+            for kind, month in (("mom", periods[1]), ("yoy", periods[2]))
         },
         options=filter_options(dataset, filters),
         warnings=warnings,
@@ -232,7 +249,7 @@ def filter_options(dataset: ReportDataset, filters: ReportFilter) -> dict[str, l
         candidates = [
             fact
             for fact in dataset.operating
-            if fact.source.period == PERIODS[0]
+            if fact.source.period == dataset.month
             and all(
                 not getattr(filters, previous)
                 or getattr(filters, previous) == dimensions(fact)[previous]
@@ -247,7 +264,9 @@ def filter_options(dataset: ReportDataset, filters: ReportFilter) -> dict[str, l
 
 @lru_cache(maxsize=1)
 def product_contexts(dataset: ReportDataset) -> dict[str, ProductStyleContext]:
-    return diagnose_styles(breakdown(dataset.operating, "styles"))
+    return diagnose_styles(
+        breakdown(dataset.operating, "styles", periods=ReportPeriod(dataset.month).months)
+    )
 
 
 def product_diagnoses(dataset: ReportDataset) -> dict[str, str]:

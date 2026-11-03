@@ -53,7 +53,7 @@ export function InventoryStructure({
       </div>
       {overview && (
         <div className="inventory-structure-grid">
-          <Card title="9月一级品类库存数量占比" size="small">
+          <Card title="本月一级品类库存数量占比" size="small">
             <div className="report-table-scroll">
               <table className="report-table inventory-structure-table">
                 <thead>
@@ -105,7 +105,7 @@ export function InventoryStructure({
               )}
             </div>
           </Card>
-          <Card title="9月三级品类库存结构" size="small">
+          <Card title="本月三级品类库存结构" size="small">
             <div className="inventory-category-structure report-table-scroll">
               <table className="report-table">
                 <thead>

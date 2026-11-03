@@ -154,7 +154,7 @@ def scope_records(records: list[SourceRecord], filters: ReportFilter) -> list[So
 
 
 def history_view(dataset: ReportDataset, filters: ReportFilter, years: list[str]) -> HistoryView:
-    cutoff = str(dataset.manifest.get("report_month", "2026-09"))
+    cutoff = dataset.month
     all_records = [
         row
         for row in dataset.records("history")
@@ -190,7 +190,7 @@ def history_view(dataset: ReportDataset, filters: ReportFilter, years: list[str]
         listings=breakdown,
         best_months=best,
         years=available_years,
-        source_note="金额均取近6年LISTING数据表；净销售额=销售金额+退货金额，净利润保留产品净利润源字段。所有区域按站点＋LISTING跨组排除本年无销售及停运/废弃组合；定位引用产品基础信息，并沿用原9月报告已确认的手工覆盖，其他冲突保留待确认。",
+        source_note="金额均取近6年LISTING数据表；净销售额=销售金额+退货金额，净利润保留产品净利润源字段。所有区域按站点＋LISTING跨组排除本年无销售及停运/废弃组合；定位引用产品基础信息，仅9月沿用原报告已确认的手工覆盖，其他冲突保留待确认。",
         excluded=excluded,
         options={
             "site": sorted({row.site for row in eligible}),

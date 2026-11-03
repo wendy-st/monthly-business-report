@@ -1,13 +1,18 @@
 import { useEffect, useState } from "react";
+import { useReportMonth } from "./report-month";
 import type { Filters } from "./contracts";
 
 const responses = new Map<string, Promise<unknown>>();
 
 async function fetchReport(resource: string): Promise<unknown> {
-  const response = await fetch(`/api/reports/2026-09/${resource}`);
+  const response = await fetch(
+    resource.startsWith("itk/")
+      ? `/api/${resource}`
+      : `/api/reports/${resource}`,
+  );
   if (!response.ok) {
     if (response.status === 503)
-      throw new Error("9月数据尚未就绪，请启动后端或完成本地导入。");
+      throw new Error("数据尚未就绪，请启动后端或完成本地导入。");
     if (response.status === 422)
       throw new Error("筛选参数无效，请重置筛选后重试。");
     throw new Error(
@@ -37,7 +42,9 @@ export function query(filters: Filters): string {
 }
 
 /** 复用同范围请求；切换后忽略旧回包，避免把旧金额显示到新范围。 */
-export function useReport<T>(resource: string) {
+export function useReport<T>(path: string) {
+  const { month } = useReportMonth();
+  const resource = path.startsWith("itk/") ? path : `${month}/${path}`;
   const [state, setState] = useState<{
     resource: string;
     data?: T;

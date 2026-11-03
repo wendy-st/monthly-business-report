@@ -1,3 +1,4 @@
+import { monthLabel, comparedMonth, useReportMonth } from "./report-month";
 import { useState } from "react";
 import { Card, Table } from "antd";
 import type { TableColumnsType } from "antd";
@@ -39,6 +40,7 @@ function comparisonColumns(
 
 /** 筛选仅选择后端已计算好的店铺行及同范围小计。 */
 export function ShopOperation({ data }: { data: OverviewDetails }) {
+  const { month } = useReportMonth();
   const [site, setSite] = useState("");
   const rows = data.shops.filter(
     (row) => !site || row.dimensions.site === site,
@@ -55,7 +57,7 @@ export function ShopOperation({ data }: { data: OverviewDetails }) {
       render: (_, row) => row.dimensions.shop ?? row.label,
     },
     {
-      title: "9月销量",
+      title: "本月销量",
       align: "right",
       width: 80,
       onHeaderCell: () => ({
@@ -64,7 +66,7 @@ export function ShopOperation({ data }: { data: OverviewDetails }) {
       render: (_, row) => format(row.current.units, 0),
     },
     {
-      title: "9月销售额",
+      title: "本月销售额",
       align: "right",
       width: 90,
       onHeaderCell: () => ({
@@ -73,7 +75,7 @@ export function ShopOperation({ data }: { data: OverviewDetails }) {
       render: (_, row) => overviewAmount(row.current.revenue),
     },
     {
-      title: "9月净利润",
+      title: "本月净利润",
       align: "right",
       width: 90,
       onHeaderCell: () => ({
@@ -83,7 +85,7 @@ export function ShopOperation({ data }: { data: OverviewDetails }) {
       render: (_, row) => overviewAmount(row.current.profit),
     },
     {
-      title: "9月净利率",
+      title: "本月净利率",
       align: "right",
       width: 80,
       onHeaderCell: () => ({
@@ -95,7 +97,7 @@ export function ShopOperation({ data }: { data: OverviewDetails }) {
           : `${format(row.current.margin, 1, 0.01)}%`,
     },
     {
-      title: "环比2026年8月",
+      title: `环比${monthLabel(comparedMonth(month, -1))}`,
       className: "overview-shop-mom",
       onHeaderCell: () => ({
         style: { background: "var(--report-color-shop-mom-head)" },
@@ -103,7 +105,7 @@ export function ShopOperation({ data }: { data: OverviewDetails }) {
       children: comparisonColumns("mom"),
     },
     {
-      title: "同比2025年9月",
+      title: `同比${monthLabel(comparedMonth(month, -12))}`,
       className: "overview-shop-yoy",
       onHeaderCell: () => ({
         style: { background: "var(--report-color-shop-yoy-head)" },

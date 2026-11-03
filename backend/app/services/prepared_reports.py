@@ -23,7 +23,8 @@ from app.services.product_refunds import refund_analysis
 from app.services.product_report import product_view
 from app.services.report_cache import ReportCache
 from app.services.report_dataset import ReportDataset, open_dataset
-from app.services.shipping_standards import shipping_identity
+from app.services.report_period import BASELINE_MONTH
+from app.services.shipping_standards import shipping_identity, shipping_source
 
 OVERVIEW_GRAINS = {"groups", "sites", "categories", "category3", "listings", "shops"}
 DISPLAY_AMOUNTS = {"units", "revenue", "profit", "margin"}
@@ -54,12 +55,14 @@ def financial_projection(report: FinancialView) -> FinancialView:
 
 
 class PreparedReports:
-    def __init__(self, root: Path, version: str | None = None) -> None:
-        self.cache = ReportCache(root, version)
+    def __init__(
+        self, root: Path, version: str | None = None, *, month: str = BASELINE_MONTH
+    ) -> None:
+        self.cache = ReportCache(root, version, month=month)
 
     @cached_property
     def dataset(self) -> ReportDataset:
-        return open_dataset(self.cache.root)
+        return open_dataset(self.cache.root, self.cache.month)
 
     @cached_property
     def turnover(self) -> list[InventoryFact]:
@@ -71,7 +74,11 @@ class PreparedReports:
         filters = filters or ReportFilter()
         parameters = filters.model_dump()
         if resource in {"inventory", "listing"}:
-            parameters["shipping_source"] = shipping_identity()
+            parameters["shipping_source"] = shipping_identity(
+                shipping_source(
+                    self.cache.root / "snapshots" / self.cache.identity, self.cache.month
+                )
+            )
         if resource == "financial" and compact:
             return self.cache.result(
                 "financial-display",
@@ -129,5 +136,7 @@ class PreparedReports:
         if resource == "listing":
             return listing_view(self.dataset, filters, self.turnover)
         if resource == "history" and isinstance(filters, HistoryFilter):
-            return history_view(self.dataset, filters, filters.years.split(","))
+            return history_view(
+                self.dataset, filters, [year for year in filters.years.split(",") if year]
+            )
         raise ValueError("未知报告结果类型")

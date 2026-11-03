@@ -9,6 +9,7 @@ from app.services.financial_model import number, ratio, serialize
 from app.services.inventory_metrics import stock_groups, turnover_rows
 from app.services.inventory_sources import InventoryFact, current_stock, matches, sum_amounts
 from app.services.report_dataset import ReportDataset
+from app.services.report_period import BASELINE_MONTH, ReportPeriod
 
 
 def difference(current: str | None, previous: str | None) -> Decimal | None:
@@ -16,7 +17,7 @@ def difference(current: str | None, previous: str | None) -> Decimal | None:
     return left - right if left is not None and right is not None else None
 
 
-def inventory_kpis(rows: list[InventoryRow]) -> list[InventoryKpi]:
+def inventory_kpis(rows: list[InventoryRow], month: str = BASELINE_MONTH) -> list[InventoryKpi]:
     output = []
     for label, unit, scope, field in (
         ("库存资金", "万元", "所有仓库", "end_amount"),
@@ -29,9 +30,7 @@ def inventory_kpis(rows: list[InventoryRow]) -> list[InventoryKpi]:
             for row in rows
             if row.dimensions["scope"] == scope
         }
-        current, previous, year_ago = (
-            values.get(month) for month in ("2026-09", "2026-08", "2025-09")
-        )
+        current, previous, year_ago = (values.get(month) for month in ReportPeriod(month).months)
         changes = []
         for base in (previous, year_ago):
             delta = difference(current, base)
@@ -83,7 +82,7 @@ def turnover_details(
             "category3": source.category3,
             "style": source.style,
         }
-        if source.period == "2026-09" and matches(dimensions, filters):
+        if source.period == dataset.month and matches(dimensions, filters):
             key = tuple(dimensions[name] for name in names)
             # 沿用原报告经营销量列：销量加退货数量；周转分母仍独立取进销存净流量。
             sold, returned = fact.amounts.get("sales_qty"), fact.amounts.get("return_qty")
@@ -97,15 +96,20 @@ def turnover_details(
         key = tuple(row.dimensions[name] for name in names)
         trend = {
             item.dimensions["month"]: item.values
-            for item in turnover_rows(pools[key], ReportFilter(), available_months=available_months)
+            for item in turnover_rows(
+                pools[key], ReportFilter(), available_months=available_months, month=dataset.month
+            )
             if item.dimensions["scope"] == "FBA+海外仓"
         }
-        current = trend.get("2026-09", {})
+        current = trend.get(dataset.month, {})
         values = {**row.values, **current}
         quantity = sales.get(key, Decimal(0))
         values["sales_units"] = str(quantity) if quantity is not None else None
-        values["ytd_days_qty"] = trend.get("2026-YTD", {}).get("days_qty")
-        for name, month in (("mom", "2026-08"), ("yoy", "2025-09")):
+        values["ytd_days_qty"] = trend.get(f"{dataset.month[:4]}-YTD", {}).get("days_qty")
+        for name, month in (
+            ("mom", ReportPeriod(dataset.month).months[1]),
+            ("yoy", ReportPeriod(dataset.month).months[2]),
+        ):
             change = difference(current.get("days_qty"), trend.get(month, {}).get("days_qty"))
             values[f"{name}_days_qty"] = str(change) if change is not None else None
         for field in ("quantity", "amount", "purchase", "freight"):

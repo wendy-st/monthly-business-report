@@ -4,9 +4,10 @@ from decimal import Decimal
 
 from app.services.cost_analysis import exchange_rates
 from app.services.financial_model import Amounts, aggregate, combine, ratio, serialize
-from app.services.financial_report import PERIODS, group_facts
+from app.services.financial_report import group_facts
 from app.services.product_attribution import COST_KEYS
 from app.services.report_dataset import OperatingFact, ReportDataset
+from app.services.report_period import ReportPeriod
 
 ZERO = Decimal(0)
 
@@ -38,11 +39,12 @@ def restored_cost(periods: dict[str, Amounts], month: str, key: str) -> Decimal 
 def product_rates(
     dataset: ReportDataset, facts: list[OperatingFact]
 ) -> dict[str, dict[str, dict[str, str | None]]]:
+    report_periods = ReportPeriod(dataset.month).months
     rates = exchange_rates(dataset)
     listings = {
         key: {
             month: aggregate(fact.amounts for fact in pool if fact.source.period == month)
-            for month in PERIODS
+            for month in report_periods
         }
         for key, pool in group_facts(dataset.operating, "listings").items()
     }
@@ -50,7 +52,7 @@ def product_rates(
     styles: list[tuple[str, str, str, dict[str, Amounts]]] = []
     for pool in group_facts(facts, "styles").values():
         periods: dict[str, Amounts] = {}
-        for month in PERIODS:
+        for month in report_periods:
             selected = [fact for fact in pool if fact.source.period == month]
             periods[month] = (
                 aggregate(fact.amounts for fact in selected)
@@ -72,19 +74,19 @@ def product_rates(
         styles.append((source.group, source.site, source.listing, periods))
     totals = {
         month: aggregate(fact.amounts for fact in facts if fact.source.period == month)
-        for month in PERIODS
+        for month in report_periods
     }
     output: dict[str, dict[str, dict[str, str | None]]] = {}
-    for comparison, month in (("mom", PERIODS[1]), ("yoy", PERIODS[2])):
+    for comparison, month in (("mom", report_periods[1]), ("yoy", report_periods[2])):
         inputs: dict[str, list[Decimal | None]] = {}
         for group, site, listing, periods in styles:
             parent = listings[group, site, listing]
-            current_fx, base_fx = rates.get((PERIODS[0], site)), rates.get((month, site))
-            current, base = periods[PERIODS[0]], periods[month]
+            current_fx, base_fx = rates.get((report_periods[0], site)), rates.get((month, site))
+            current, base = periods[report_periods[0]], periods[month]
             price = next(
                 (
                     value
-                    for period, fx in ((PERIODS[0], current_fx), (month, base_fx))
+                    for period, fx in ((report_periods[0], current_fx), (month, base_fx))
                     if (
                         value := ratio(
                             ratio(parent[period]["sales_amount"], fx), parent[period]["sales_qty"]
@@ -121,7 +123,7 @@ def product_rates(
                 for field, value in (
                     ("current_abs_" + key, current[key]),
                     ("adjusted_" + key, base[key]),
-                    ("current_clean_" + key, restored_cost(periods, PERIODS[0], key)),
+                    ("current_clean_" + key, restored_cost(periods, report_periods[0], key)),
                     ("base_clean_" + key, restored_cost(periods, month, key)),
                 ):
                     values[field] = abs(value) if value is not None else None
@@ -140,11 +142,15 @@ def product_rates(
                     else None
                 )
 
-            current_rate = positive_ratio(totals[PERIODS[0]][key], totals[PERIODS[0]]["revenue"])
+            current_rate = positive_ratio(
+                totals[report_periods[0]][key], totals[report_periods[0]]["revenue"]
+            )
             base_rate = positive_ratio(totals[month][key], totals[month]["revenue"])
             actual = difference(current_rate, base_rate)
             adjusted = difference(
-                positive_ratio(merged.get("current_abs_" + key), totals[PERIODS[0]]["revenue"]),
+                positive_ratio(
+                    merged.get("current_abs_" + key), totals[report_periods[0]]["revenue"]
+                ),
                 positive_ratio(merged.get("adjusted_" + key), merged.get("adjusted_revenue")),
             )
             clean = difference(

@@ -1,3 +1,4 @@
+import { useReportMonth } from "./report-month";
 import { Card, Empty, Segmented, theme } from "antd";
 import { useState } from "react";
 import { ReportChart } from "../../shared/report/ReportChart";
@@ -13,6 +14,7 @@ export function InventoryTrends({
   data: InventoryView;
   overview: boolean;
 }) {
+  const { month } = useReportMonth();
   const [basis, setBasis] = useState("days_purchase");
   const { token } = theme.useToken();
   const sharedMax =
@@ -35,7 +37,7 @@ export function InventoryTrends({
         )}
         <div className="two-column inventory-turnover-grid">
           {[
-            ["days_qty", "数量周转天数（2025—2026年同期对比）"],
+            ["days_qty", "数量周转天数（上年—本年同期对比）"],
             [
               basis,
               `金额周转天数（${basis === "days_purchase" ? "不含" : "含"}头程）`,
@@ -75,7 +77,12 @@ export function InventoryTrends({
                         `${row.dimensions.scope} ${row.label}：${format(row.values[field], 1)}天`,
                     )
                     .join("；")}
-                  option={turnoverOption(data.turnover, field, sharedMax)}
+                  option={turnoverOption(
+                    data.turnover,
+                    field,
+                    sharedMax,
+                    month.slice(0, 4),
+                  )}
                 />
               </div>
             </Card>

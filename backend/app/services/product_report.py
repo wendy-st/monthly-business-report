@@ -4,10 +4,11 @@ from app.schemas.products import ProductAnalysis, ProductView
 from app.schemas.reports import FinancialView, ReportFilter
 from app.services.cost_analysis import exchange_rates
 from app.services.financial_model import Amounts, aggregate, number, ratio, serialize
-from app.services.financial_report import PERIODS, product_contexts, select_facts
+from app.services.financial_report import product_contexts, select_facts
 from app.services.product_attribution import COST_KEYS, attribute_costs
 from app.services.product_rates import product_rates
 from app.services.report_dataset import ReportDataset
+from app.services.report_period import ReportPeriod
 
 CURRENCIES = {"US": "USD", "CA": "CAD", "MX": "MXN", "UK": "GBP", "JP": "JPY"}
 
@@ -36,6 +37,7 @@ def product_view(
                 for key in COST_KEYS:
                     rate = ratio(number(values.get(key)), revenue)
                     values[key + "_rate"] = str(rate) if rate is not None else None
+    report_periods = ReportPeriod(dataset.month).months
     facts = select_facts(dataset, filters)
     all_contexts = product_contexts(dataset)
     rates = exchange_rates(dataset)
@@ -47,7 +49,7 @@ def product_view(
         site = row.dimensions["site"]
         context.currency = CURRENCIES.get(site, "EUR" if site in {"DE", "IT", "FR", "ES"} else "")
         price = ratio(
-            ratio(number(row.current.get("sales_amount")), rates.get((PERIODS[0], site))),
+            ratio(number(row.current.get("sales_amount")), rates.get((report_periods[0], site))),
             number(row.current.get("sales_qty")),
         )
         context.local_price = str(price) if price is not None else None
@@ -63,8 +65,8 @@ def product_view(
     )
     comparisons = (
         {
-            name: attribute_costs(facts, month, bool(filters.result))
-            for name, month in (("mom", PERIODS[1]), ("yoy", PERIODS[2]))
+            name: attribute_costs(facts, month, bool(filters.result), current_month=dataset.month)
+            for name, month in (("mom", report_periods[1]), ("yoy", report_periods[2]))
         }
         if scope_available
         else {}
@@ -73,7 +75,7 @@ def product_view(
     for key in COST_KEYS:
         trend_values: Amounts = {}
         reasons: dict[str, str | None] = {}
-        for field, month in zip(("current", "previous", "year_ago"), PERIODS, strict=True):
+        for field, month in zip(("current", "previous", "year_ago"), report_periods, strict=True):
             period_facts = [fact for fact in facts if fact.source.period == month]
             total = aggregate(fact.amounts for fact in period_facts)
             qty = total["units"]

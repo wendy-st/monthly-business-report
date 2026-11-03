@@ -133,7 +133,7 @@ def test_summary_uses_actual_basis_and_original_significance_threshold() -> None
     for row in actual.rows:
         row.delta = "-0.0009" if row.key == "commission" else row.delta
     view = overview_details(report, [actual, adjusted])
-    assert view.conclusions["yoy"][0].detail == "9月净利润同比增加0.02万。"
+    assert view.conclusions["yoy"][0].detail == "本月净利润同比增加0.02万。"
     assert "FBA佣金" not in view.conclusions["yoy"][3].detail
     assert len(view.conclusions["yoy"]) == 5
 
@@ -170,7 +170,10 @@ def test_overview_api_contract_keeps_other_views_and_validates_query(
     parameters = ReportFilter().model_dump()
     reports.cache.result("financial", parameters, fixture_report)
     reports.cache.result("costs", parameters, lambda: [fixture_analysis()])
-    monkeypatch.setattr(main, "reports", lambda: reports)
+    original_reports = main.reports
+    monkeypatch.setattr(
+        main, "reports", lambda month: reports if month == "2026-09" else original_reports(month)
+    )
     overview = main.financial("2026-09", FinancialQuery(view="overview"))
     assert overview.status_code == 200
     assert len(json.loads(Path(overview.path).read_bytes())["overview"]["sales_top10"]) == 2

@@ -15,7 +15,7 @@ def normalized_sku(value: str) -> str:
 def inventory_styles(dataset: ReportDataset) -> dict[tuple[str, str, str], str]:
     pools: dict[tuple[str, str, str], set[str]] = defaultdict(set)
     for source in dataset.records("style_mapping"):
-        if not source.file.endswith("2026-09.xlsx"):
+        if not source.file.endswith(f"{dataset.month}.xlsx"):
             continue
         raw = source.raw
         style = (

@@ -12,6 +12,8 @@ from threading import RLock
 
 from pydantic import BaseModel
 
+from app.services.report_period import BASELINE_MONTH, ReportPeriod
+
 
 def data_root() -> Path:
     return Path(
@@ -40,13 +42,21 @@ def encode_result(value: object) -> bytes:
     )
 
 
+def prepared_source(root: Path, identity: str) -> Path:
+    # 保留完整身份用于核对，目录使用80位摘要，避免Windows批次目录超过路径长度限制。
+    return root / "prepared" / identity[:20]
+
+
 class ReportCache:
-    def __init__(self, root: Path, version: str | None = None) -> None:
+    def __init__(
+        self, root: Path, version: str | None = None, *, month: str = BASELINE_MONTH
+    ) -> None:
         self.root = root
-        self.manifest = json.loads((root / "report-2026-09.json").read_text(encoding="utf-8"))
+        self.month = ReportPeriod(month).current
+        self.manifest = json.loads((root / f"report-{self.month}.json").read_text(encoding="utf-8"))
         self.identity = str(self.manifest["identity"])
         self.version = version or calculation_version()
-        self.directory = root / "prepared" / self.identity / self.version
+        self.directory = prepared_source(root, self.identity) / self.version[:20]
         self.lock = RLock()
 
     def result(

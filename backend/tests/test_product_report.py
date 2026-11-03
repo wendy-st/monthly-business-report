@@ -265,7 +265,10 @@ def test_refund_api_scope_cache_and_query_validation(
     scope = ReportFilter(site="US")
     report = financial_view(data, scope)
     reports.cache.result("financial", scope.model_dump(), lambda: report)
-    monkeypatch.setattr(main, "reports", lambda: reports)
+    original_reports = main.reports
+    monkeypatch.setattr(
+        main, "reports", lambda month: reports if month == "2026-09" else original_reports(month)
+    )
 
     def response(min_sales: int = 100) -> ProductRefundView:
         result = main.product_refunds("2026-09", ProductRefundQuery(site="US", min_sales=min_sales))

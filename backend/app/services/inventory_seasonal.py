@@ -14,8 +14,9 @@ from app.services.inventory_metrics import stock_row, turnover_rows
 from app.services.inventory_readiness import all_readiness
 from app.services.inventory_sources import InventoryFact, matches
 from app.services.report_dataset import ReportDataset
+from app.services.report_period import ReportPeriod
 from app.services.seasonal_risk import seasonal_risk
-from app.services.shipping_standards import shipping_identity
+from app.services.shipping_standards import shipping_identity, shipping_source
 
 
 def date_label(value: str) -> str:
@@ -42,7 +43,10 @@ def season_rows(
     filters = filters or ReportFilter()
     pools: dict[tuple[str, ...], list[InventoryFact]] = defaultdict(list)
     stock_pools: dict[tuple[str, ...], list[InventoryFact]] = defaultdict(list)
-    readiness = all_readiness(dataset, shipping_identity())
+    readiness = all_readiness(
+        dataset,
+        shipping_identity(shipping_source(getattr(dataset, "directory", None), dataset.month)),
+    )
     contexts = {}
     for item in facts:
         if item.dimensions["warehouse"] != "本地仓":
@@ -78,10 +82,10 @@ def season_rows(
         ]
         trend = {
             item.dimensions["month"]: item.values
-            for item in turnover_rows(pools[key], ReportFilter())
+            for item in turnover_rows(pools[key], ReportFilter(), month=dataset.month)
             if item.dimensions["scope"] == "FBA+海外仓"
         }
-        days = trend.get("2026-09", {}).get("days_qty")
+        days = trend.get(dataset.month, {}).get("days_qty")
         demand = combine(number(item.demand) for item in future)
         assessment = scope_assessment(dataset, stock_pool, scope)
         forecast, _ = forecast_amounts(dataset, scope, allowed_listings=active_listings(dataset))
@@ -95,8 +99,12 @@ def season_rows(
                     "future_demand": demand,
                     "coverage": ratio(number(row.values.get("quantity")), demand),
                     "abroad_days": cover,
-                    "mom_days_qty": difference(days, trend.get("2026-08", {}).get("days_qty")),
-                    "yoy_days_qty": difference(days, trend.get("2025-09", {}).get("days_qty")),
+                    "mom_days_qty": difference(
+                        days, trend.get(ReportPeriod(dataset.month).months[1], {}).get("days_qty")
+                    ),
+                    "yoy_days_qty": difference(
+                        days, trend.get(ReportPeriod(dataset.month).months[2], {}).get("days_qty")
+                    ),
                 }
             ),
             "abroad_bound": str(int(bound)),

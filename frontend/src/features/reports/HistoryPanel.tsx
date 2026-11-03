@@ -1,3 +1,4 @@
+import { useReportMonth } from "./report-month";
 import { Alert, Button, Card, Empty, Select, Skeleton } from "antd";
 import { useLayoutEffect, useRef, useState } from "react";
 import { ReportChart } from "../../shared/report/ReportChart";
@@ -13,8 +14,9 @@ import { historyCosts, historyAmount } from "./history-presentation";
 import { percent } from "./presentation";
 
 export function HistoryPanel({ filters }: { filters: Filters }) {
+  const { month } = useReportMonth();
   const [selection, setSelection] = useState<HistorySelection>({
-    years: ["2026"],
+    years: [month.slice(0, 4)],
     site: filters.site || "",
     listing: filters.listing || "",
     yearBasis: "calendar",

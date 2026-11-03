@@ -8,26 +8,30 @@ from pathlib import Path
 
 from app.services.financial_model import group_name, number
 from app.services.inventory_styles import normalized_sku
+from app.services.report_period import BASELINE_MONTH
 from app.services.workbook_reader import RawRow, read_rows
 
 SHIPPING_SOURCE = Path(__file__).resolve().parents[3] / "data/sources/2026-09/库存发货天数表.xlsx"
 StandardKey = tuple[str, str, str, str]
 
 
-def shipping_identity() -> str:
-    return (
-        hashlib.sha256(SHIPPING_SOURCE.read_bytes()).hexdigest()
-        if SHIPPING_SOURCE.exists()
-        else "missing"
-    )
+def shipping_source(directory: Path | None = None, month: str = BASELINE_MONTH) -> Path:
+    source = directory / "shipping.xlsx" if directory else SHIPPING_SOURCE
+    return SHIPPING_SOURCE if month == BASELINE_MONTH and not source.exists() else source
+
+
+def shipping_identity(source: Path = SHIPPING_SOURCE) -> str:
+    return hashlib.sha256(source.read_bytes()).hexdigest() if source.exists() else "missing"
 
 
 @lru_cache(maxsize=2)
-def shipping_index(identity: str) -> dict[StandardKey, list[RawRow]]:
+def shipping_index(
+    identity: str, source: Path = SHIPPING_SOURCE
+) -> dict[StandardKey, list[RawRow]]:
     if identity == "missing":
         return {}
     index: dict[StandardKey, list[RawRow]] = defaultdict(list)
-    for _, row in read_rows(SHIPPING_SOURCE, "Sheet1", 1):
+    for _, row in read_rows(source, "Sheet1", 1):
         group, site = group_name(row.get("小组")), (row.get("站点") or "").strip().upper()
         if group == "KAYO":
             group = "KAYO-北美" if site in {"US", "CA", "MX"} else "KAYO-欧日"

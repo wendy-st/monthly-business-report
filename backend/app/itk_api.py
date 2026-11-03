@@ -19,7 +19,7 @@ from app.services.itk_data import dataset
 from app.services.itk_export import comparison_csv, detail_rows, overview_csv
 from app.services.itk_report import comparison, overview
 
-router = APIRouter(prefix="/api/reports/2026-09/itk", tags=["ITK大盘"])
+router = APIRouter(prefix="/itk", tags=["ITK大盘"])
 
 
 @router.get("/options", response_model=Options)

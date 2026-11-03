@@ -99,6 +99,7 @@ def test_retired_profit_reports_refund_and_storage_erosion_only() -> None:
     assert "-0.01万元" in issues[0].detail
     assert "退款" in issues[1].detail and "FBA仓储" in issues[1].detail
     assert listing_mode("Ash", "UK", "RG810", "已停运") == "retired"
+    assert listing_mode("HCM", "UK", "RG810", "维护", "2026-10") == "full"
 
 
 def test_inventory_uses_sku_flags_and_compares_turnover_without_invented_thresholds() -> None:

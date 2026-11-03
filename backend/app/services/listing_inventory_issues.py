@@ -5,6 +5,7 @@ from app.schemas.listing import IssueStatus, ListingIssue
 from app.services.financial_model import number
 from app.services.inventory_readiness import readiness_summary
 from app.services.listing_financial_issues import money
+from app.services.report_period import BASELINE_MONTH, ReportPeriod
 from app.services.seasonal_risk import turnover_health
 
 
@@ -59,6 +60,7 @@ def inventory_issues(
     stock: InventoryRow,
     trend: list[InventoryRow],
     readiness: list[InventoryRow],
+    month: str = BASELINE_MONTH,
 ) -> list[ListingIssue]:
     values, issues = readiness_summary(readiness)
     known_issues = [text for text in issues if not text.startswith("资料待补充")]
@@ -84,13 +86,13 @@ def inventory_issues(
         for row in trend
         if row.dimensions["scope"] == "所有仓库"
     }
-    current = monthly.get("2026-09", {})
+    current = monthly.get(month, {})
     days = number(current.get("days_qty"))
     texts, slower = [], False
     if days is not None:
         texts.append(f"数量周转{days:.1f}天（{turnover_health(days)}）")
-        for month, label in (("2026-08", "环比"), ("2025-09", "同比")):
-            base = number(monthly.get(month, {}).get("days_qty"))
+        for base_month, label in zip(ReportPeriod(month).months[1:], ("环比", "同比"), strict=True):
+            base = number(monthly.get(base_month, {}).get("days_qty"))
             if base is not None:
                 texts.append(f"{label}{days - base:+.1f}天")
                 slower |= days > base

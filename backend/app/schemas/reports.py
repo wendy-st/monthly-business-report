@@ -44,7 +44,7 @@ PeriodScope = Literal["full", "h1", "h2"]
 
 
 class HistoryFilter(ReportFilter):
-    years: str = Field(default="2026", pattern=r"^202[0-6](,202[0-6]){0,6}$")
+    years: str = Field(default="", pattern=r"^(20\d{2}(,20\d{2}){0,6})?$")
     year_basis: YearBasis = "calendar"
     period_scope: PeriodScope = "full"
 

@@ -140,7 +140,7 @@ test("默认真实报告与API一致，七个入口、年度分组和来源可�
     .getByRole("button", { name: "数据来源与导入状态", exact: true })
     .click();
   await expect(
-    page.getByText("9月源表已只读导入，当前页面读取本地快照。", {
+    page.getByText("2026年9月源表已只读导入，当前页面读取本地快照。", {
       exact: true,
     }),
   ).toBeVisible();
@@ -188,7 +188,7 @@ test("服务错误可重试，来源文件名特殊字符按文字呈现", async
     .getByRole("button", { name: "数据来源与导入状态", exact: true })
     .click();
   await expect(
-    page.getByText("9月数据尚未就绪，请启动后端或完成本地导入。", {
+    page.getByText("数据尚未就绪，请启动后端或完成本地导入。", {
       exact: true,
     }),
   ).toBeVisible();

@@ -11,30 +11,12 @@ from pathlib import Path
 from typing import TypedDict
 from zipfile import ZipFile
 
+from app.services.report_period import BASELINE_MONTH
+from app.services.source_contract import source_plan
+
 MAIN_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 REL_ID = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id"
 NS = {"m": MAIN_NS}
-
-REQUIRED_SHEETS = {
-    "经营报告数据汇报表 - 2026年9月.xlsx": [
-        "月度经营底表",
-        "产品基础信息表",
-        "汇率信息",
-        "库存数据",
-    ],
-    "2026年-库存周转率 - 副本.xlsx": [
-        "数据源-2026年-FBA仓-进销存",
-        "数据源-2026-本地仓&海外仓-新",
-    ],
-    "2025年-库存周转率 - 副本.xlsx": [
-        "数据源-2025年-FBA仓-进销存",
-        "数据源-2025-本地仓&海外仓",
-        "FBA-2024.12",
-    ],
-    "全小组_库存款式补充映射表_2026-09.xlsx": ["自动匹配核对", "待补充映射"],
-    "MSKU月销量预估表-2026-09-21.xlsx": ["2026预估销量", "字段映射"],
-    "近6年LISTING盈收汇总（2026年-2020年4月-AMAZON）.xlsx": ["LISTING数据源总表"],
-}
 
 
 class SheetCheck(TypedDict):
@@ -128,12 +110,19 @@ def inspect_file(path: Path, required_sheets: Iterable[str]) -> FileCheck:
         }
 
 
-def inspect_sources(source_dir: Path) -> PreflightResult:
-    paths = sorted(source_dir.glob("*.xlsx"))
-    missing = sorted(set(REQUIRED_SHEETS) - {path.name for path in paths})
-    files = [inspect_file(path, REQUIRED_SHEETS.get(path.name, [])) for path in paths]
+def inspect_sources(source_dir: Path, month: str = BASELINE_MONTH) -> PreflightResult:
+    try:
+        plan = source_plan(source_dir, month)
+        missing = []
+    except ValueError as error:
+        plan = {}
+        missing = [str(error)]
+    files = [
+        inspect_file(source_dir / name, [spec.sheet for spec in specs])
+        for name, specs in plan.items()
+    ]
     return {
-        "report_month": "2026-09",
+        "report_month": month,
         "structure_complete": not missing and not any(row["missing_sheets"] for row in files),
         "business_validated": False,
         "formula_freshness": "NOT_VERIFIED",
@@ -143,15 +132,16 @@ def inspect_sources(source_dir: Path) -> PreflightResult:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="只读检查2026-09基准输入，不进行业务重算")
+    parser = argparse.ArgumentParser(description="只读检查指定月份配套输入，不进行业务重算")
     parser.add_argument("--source-dir", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--month", default=BASELINE_MONTH)
     args = parser.parse_args()
     source = args.source_dir.resolve()
     output = args.output.resolve()
     if output.suffix != ".json" or output.parent == source:
         parser.error("输出必须是运行目录中的JSON文件，不能写入源数据根目录")
-    result = inspect_sources(source)
+    result = inspect_sources(source, args.month)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(

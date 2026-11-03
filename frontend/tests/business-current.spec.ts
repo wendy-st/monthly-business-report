@@ -256,7 +256,7 @@ test("业务页失败可重试，LISTING特殊字符按文本展示", async ({ p
     .getByRole("menuitem", { name: "月度经营分析", exact: true })
     .click();
   await expect(
-    page.getByText("9月数据尚未就绪，请启动后端或完成本地导入。", {
+    page.getByText("数据尚未就绪，请启动后端或完成本地导入。", {
       exact: true,
     }),
   ).toBeVisible();

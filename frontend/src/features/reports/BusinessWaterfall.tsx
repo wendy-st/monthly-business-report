@@ -1,3 +1,4 @@
+import { useReportMonth, comparedMonth } from "./report-month";
 import { useState } from "react";
 import { Card } from "antd";
 import { BusinessToggle } from "./BusinessControls";
@@ -15,6 +16,7 @@ export function BusinessWaterfall({
   data: BusinessView;
   costs?: BasisAnalysis[];
 }) {
+  const { month } = useReportMonth();
   const [mode, setMode] = useState("mom");
   const steps = data.waterfall[mode];
   return (
@@ -38,7 +40,7 @@ export function BusinessWaterfall({
     >
       <p className="sample-note">
         当前口径：{data.business.scope}；
-        {mode === "mom" ? "环比 · 对比期 2026-08" : "同比 · 对比期 2025-09"}
+        {`${mode === "mom" ? "环比" : "同比"} · 对比期 ${comparedMonth(month, mode === "mom" ? -1 : -12)}`}
       </p>
       {steps.every((step) => step.amount !== null) ? (
         <div className="waterfall-plot">

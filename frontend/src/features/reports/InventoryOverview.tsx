@@ -19,7 +19,7 @@ export function InventoryOverview({ data }: { data: InventoryView }) {
               <span className="inventory-metric-label">{item.label}</span>
               <div className="metric-value">
                 {display(item.current)}
-                <small>9月</small>
+                <small>本月</small>
               </div>
               {[
                 ["环比", item.previous, item.mom],

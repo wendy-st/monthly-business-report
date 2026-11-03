@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from app.services.financial_model import Amounts, financials, group_name
+from app.services.report_period import BASELINE_MONTH
 from app.services.source_import import SourceRecord
 
 
@@ -33,6 +34,10 @@ class ReportDataset:
         self.operating = [self.prepare(item) for item in operating]
         self.align_historical_styles()
 
+    @property
+    def month(self) -> str:
+        return str(self.manifest.get("report_month", BASELINE_MONTH))
+
     def align_historical_styles(self) -> None:
         current: dict[tuple[str, ...], set[str]] = defaultdict(set)
 
@@ -48,11 +53,11 @@ class ReportDataset:
             )
 
         for fact in self.operating:
-            if fact.source.period == "2026-09" and fact.source.msku:
+            if fact.source.period == self.month and fact.source.msku:
                 current[key(fact.source)].add(fact.source.style)
         for fact in self.operating:
             styles = current.get(key(fact.source), set())
-            if fact.source.period < "2026-09" and fact.source.msku and len(styles) == 1:
+            if fact.source.period < self.month and fact.source.msku and len(styles) == 1:
                 aligned = next(iter(styles))
                 fact.style_renamed = fact.source.style != aligned
                 fact.source.style = aligned
@@ -91,7 +96,7 @@ class ReportDataset:
         return OperatingFact(source, financials(source.raw), status)
 
     def external_group(self, source: SourceRecord) -> tuple[str, str]:
-        assigned, status = self.resolve(source.period or "2026-09", source.site, source.msku)
+        assigned, status = self.resolve(source.period or self.month, source.site, source.msku)
         if assigned:
             return assigned, status
         if status == "RESPONSIBILITY_CONFLICT":
@@ -99,6 +104,6 @@ class ReportDataset:
         return group_name(source.group) or "未分配", "SOURCE_GROUP_FALLBACK"
 
 
-def open_dataset(root: Path) -> ReportDataset:
-    pointer = json.loads((root / "report-2026-09.json").read_text(encoding="utf-8"))
+def open_dataset(root: Path, month: str = BASELINE_MONTH) -> ReportDataset:
+    pointer = json.loads((root / f"report-{month}.json").read_text(encoding="utf-8"))
     return ReportDataset(root / "snapshots" / pointer["identity"])

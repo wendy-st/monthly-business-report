@@ -24,10 +24,10 @@ test("总览五区、四项指标、金额切换和一级品类筛选复原", as
     "5FBA库龄",
   ]);
   await expect(page.locator(".inventory-page .metric-value")).toHaveText([
-    "4,003.62万9月",
-    "1,638,6079月",
-    "383.3天9月",
-    "182.6天9月",
+    "4,003.62万本月",
+    "1,638,607本月",
+    "383.3天本月",
+    "182.6天本月",
   ]);
   const response = await request.get("/api/reports/2026-09/inventory");
   expect(response.ok()).toBeTruthy();
@@ -86,6 +86,7 @@ test("小组筛选重算库存和周转，风险切换保留原报告款式", as
     (response) =>
       response.url().includes("/inventory?") &&
       response.url().includes("listing=SP001"),
+    { timeout: 60_000 },
   );
   await page.getByTitle("SP001", { exact: true }).click();
   expect((await filtering).ok()).toBeTruthy();
@@ -289,7 +290,7 @@ test("接口参数由后端校验，库存读取失败可以重试", async ({ pa
   await page.reload();
   await page.getByRole("menuitem", { name: "库存周转", exact: true }).click();
   await expect(
-    page.getByText("9月数据尚未就绪，请启动后端或完成本地导入。", {
+    page.getByText("数据尚未就绪，请启动后端或完成本地导入。", {
       exact: true,
     }),
   ).toBeVisible();

@@ -20,7 +20,7 @@ from app.services.financial_model import (
     ratio,
     serialize,
 )
-from app.services.financial_report import PERIODS, select_facts
+from app.services.financial_report import select_facts
 from app.services.refund_restoration import (
     fallback_commission,
     identifiable_detail,
@@ -28,6 +28,7 @@ from app.services.refund_restoration import (
     restore_listing,
 )
 from app.services.report_dataset import OperatingFact, ReportDataset
+from app.services.report_period import ReportPeriod
 
 RMB_FIELDS = {"purchase", "freight", "disposal", "anti_fake", "overseas"}
 
@@ -171,6 +172,7 @@ def comparison_rows(
 
 
 def analyses(dataset: ReportDataset, filters: ReportFilter) -> list[BasisAnalysis]:
+    report_periods = ReportPeriod(dataset.month).months
     facts = select_facts(dataset, filters)
     pools: dict[tuple[str, str, str], dict[str, list[OperatingFact]]] = defaultdict(
         lambda: defaultdict(list)
@@ -186,15 +188,15 @@ def analyses(dataset: ReportDataset, filters: ReportFilter) -> list[BasisAnalysi
         full_pools[source.group, source.site, source.listing][source.period].append(fact.amounts)
     rates = exchange_rates(dataset)
     output = []
-    for comparison, month in (("mom", PERIODS[1]), ("yoy", PERIODS[2])):
+    for comparison, month in (("mom", report_periods[1]), ("yoy", report_periods[2])):
         for basis in ("actual", "price_adjusted", "price_refund_adjusted"):
             current_rows, base_rows = [], []
             for listing_key, periods in pools.items():
                 _, site, listing = listing_key
                 full = {period: aggregate(rows) for period, rows in full_pools[listing_key].items()}
                 current = (
-                    aggregate(fact.amounts for fact in periods[PERIODS[0]])
-                    if periods.get(PERIODS[0])
+                    aggregate(fact.amounts for fact in periods[report_periods[0]])
+                    if periods.get(report_periods[0])
                     else derive(dict.fromkeys(FIELDS, Decimal(0)))
                 )
                 base = (
@@ -203,14 +205,14 @@ def analyses(dataset: ReportDataset, filters: ReportFilter) -> list[BasisAnalysi
                     else derive(dict.fromkeys(FIELDS, Decimal(0)))
                 )
                 raw_base = base
-                current_fx, base_fx = rates.get((PERIODS[0], site)), rates.get((month, site))
+                current_fx, base_fx = rates.get((report_periods[0], site)), rates.get((month, site))
                 if basis == "price_refund_adjusted":
-                    if periods.get(PERIODS[0]):
+                    if periods.get(report_periods[0]):
                         current = restore_listing(
                             dataset,
                             (site, listing),
-                            PERIODS[0],
-                            [fact.amounts for fact in periods[PERIODS[0]]],
+                            report_periods[0],
+                            [fact.amounts for fact in periods[report_periods[0]]],
                             full,
                         )
                     if periods.get(month):
@@ -227,7 +229,7 @@ def analyses(dataset: ReportDataset, filters: ReportFilter) -> list[BasisAnalysi
                         current,
                         current_fx,
                         base_fx,
-                        (full.get(PERIODS[0], current), full.get(month, base)),
+                        (full.get(report_periods[0], current), full.get(month, base)),
                     )
                     if basis == "price_refund_adjusted" and periods.get(month):
                         # 原报告先剔价，再用标准化销售额还原佣金；明细备用金额只换汇。
@@ -236,7 +238,7 @@ def analyses(dataset: ReportDataset, filters: ReportFilter) -> list[BasisAnalysi
                             current,
                             current_fx,
                             base_fx,
-                            (full.get(PERIODS[0], current), full.get(month, raw_base)),
+                            (full.get(report_periods[0], current), full.get(month, raw_base)),
                         )
                         detail = identifiable_detail(
                             [fact.amounts for fact in periods[month]], "commission"

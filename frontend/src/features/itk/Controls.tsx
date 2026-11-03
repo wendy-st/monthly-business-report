@@ -95,7 +95,7 @@ export function Result({
       <Alert
         type="error"
         title={error.replace(
-          "9月数据尚未就绪，请启动后端或完成本地导入。",
+          "ITK数据尚未就绪，请启动后端或完成本地导入。",
           "ITK数据暂不可用，请检查汇总CSV和本地服务。",
         )}
         action={<Button onClick={retry}>重试</Button>}

@@ -52,7 +52,9 @@ test("库存对象只分析库存，WP005等无本期事项对象退出清单", 
   await page
     .getByRole("menuitem", { name: "LISTING分析问题清单", exact: true })
     .click();
-  await expect(page.getByRole("region", { name: "CA站点报告", exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole("region", { name: "CA站点报告", exact: true }),
+  ).toHaveCount(0);
   for (const listing of ["KR001", "KSK10", "KSK20"]) {
     const card = page.getByRole("article", {
       name: `LZF/US/${listing}问题清单`,

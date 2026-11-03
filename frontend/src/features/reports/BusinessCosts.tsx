@@ -1,3 +1,4 @@
+import { useReportMonth, comparedMonth } from "./report-month";
 import { useState } from "react";
 import { Alert, Card } from "antd";
 import type { BasisAnalysis } from "./contracts";
@@ -18,6 +19,7 @@ export function BusinessCosts({
   data: BasisAnalysis[];
   details: BusinessDetails;
 }) {
+  const { month } = useReportMonth();
   const [mode, setMode] = useState("mom");
   const [basis, setBasis] = useState("actual");
   const actual = data.find(
@@ -182,7 +184,8 @@ export function BusinessCosts({
       >
         <p className="sample-note">
           {details.scope} /{" "}
-          {mode === "mom" ? "环比 · 对比期 2026-08" : "同比 · 对比期 2025-09"} /{" "}
+          {`${mode === "mom" ? "环比" : "同比"} · 对比期 ${comparedMonth(month, mode === "mom" ? -1 : -12)}`}{" "}
+          /{" "}
           {
             {
               actual: "实际",

@@ -1,13 +1,17 @@
 import { Alert, Button, Card, Descriptions, Skeleton, Table } from "antd";
+import { ImportPanel } from "./ImportPanel";
+import { monthLabel, useReportMonth } from "./report-month";
 import { useReport } from "./api";
 import type { SourceStatus } from "./contracts";
 
 export function SourcesPage() {
+  const { month } = useReportMonth();
   const request = useReport<SourceStatus>("sources");
   const data = request.data;
   return (
     <div className="section-stack">
-      <h2 className="section-heading">9月数据来源与导入状态</h2>
+      <h2 className="section-heading">{monthLabel(month)}数据来源与导入状态</h2>
+      <ImportPanel />
       {request.error && (
         <Alert
           type="error"
@@ -21,7 +25,7 @@ export function SourcesPage() {
           <Alert
             type="success"
             showIcon
-            title="9月源表已只读导入，当前页面读取本地快照。"
+            title={`${monthLabel(month)}源表已只读导入，当前页面读取本地快照。`}
           />
           <Card title="当前版本" size="small">
             <Descriptions
@@ -79,7 +83,7 @@ export function SourcesPage() {
             />
           </Card>
           <p>
-            原始Excel保持只读。相同来源重复导入不产生新版本；来源变化时停止覆盖，避免改写已有月份。后续月份的上传和生成入口尚未开放。
+            原始Excel保持只读。相同来源重复导入不产生新版本；来源变化时停止覆盖，避免改写已有月份。新月份检查和生成成功后出现在侧栏月份列表。
           </p>
         </>
       )}
