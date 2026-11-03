@@ -25,6 +25,7 @@ test("各组LISTING问题数量、站点范围及停运分析范围正确", asyn
     for (const item of data.items) {
       expect(item.group).toBe(group);
       expect(data.excluded_sites).not.toContain(item.site);
+      if (group === "LZF") expect(item.site).toBe("US");
       expect(item.issues.length).toBeGreaterThanOrEqual(1);
       expect(item.issues.length).toBeLessThanOrEqual(5);
       expect(new Set(item.issues.map((issue) => issue.key)).size).toBe(
@@ -51,6 +52,7 @@ test("库存对象只分析库存，WP005等无本期事项对象退出清单", 
   await page
     .getByRole("menuitem", { name: "LISTING分析问题清单", exact: true })
     .click();
+  await expect(page.getByRole("region", { name: "CA站点报告", exact: true })).toHaveCount(0);
   for (const listing of ["KR001", "KSK10", "KSK20"]) {
     const card = page.getByRole("article", {
       name: `LZF/US/${listing}问题清单`,

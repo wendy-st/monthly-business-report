@@ -106,7 +106,7 @@ def listing_view(
     output = []
     for key in sorted(business.keys() | inventory.keys()):
         group, site, listing = key
-        if site in EXCLUDED_SITES:
+        if site in EXCLUDED_SITES or group == "LZF" and site != "US":
             continue
         selected = ReportFilter(group=group, site=site, listing=listing)
         forecast, _ = future_rows(dataset, inventory[key], selected)
@@ -194,5 +194,5 @@ def listing_view(
     return ListingView(
         items=output,
         excluded_sites=sorted(EXCLUDED_SITES),
-        source_note="常规LISTING归总3—5条结论；无经营记录但有库存的仅分析库存。停运、废弃仅保留本期利润侵蚀及待清库存，无本期事项不展示，特殊对象不凑条数。排除MX/FR/ES/IT，仅作用于本模块。金额为人民币；剔价口径同时统一汇率。",
+        source_note="常规LISTING归总3—5条结论；无经营记录但有库存的仅分析库存。停运、废弃仅保留本期利润侵蚀及待清库存，无本期事项不展示，特殊对象不凑条数。排除MX/FR/ES/IT，LZF仅保留US，仅作用于本模块。金额为人民币；剔价口径同时统一汇率。",
     )

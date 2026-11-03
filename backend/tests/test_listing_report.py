@@ -130,7 +130,9 @@ def test_inventory_uses_sku_flags_and_compares_turnover_without_invented_thresho
     assert inventory_issues(stock.model_copy(update={"values": {}}), [], [])[0].status == "待核查"
 
 
-def listing_result(data: ReportDataset, stocks: list[InventoryFact]) -> ListingView:
+def listing_result(
+    data: ReportDataset, stocks: list[InventoryFact], group: str = "LZF"
+) -> ListingView:
     with (
         patch("app.services.listing_report.shipping_identity", return_value="synthetic"),
         patch("app.services.listing_report.current_stock", return_value=stocks),
@@ -152,7 +154,7 @@ def listing_result(data: ReportDataset, stocks: list[InventoryFact]) -> ListingV
             season_end_remaining_rate=None,
             window_end_remaining_rate=None,
         )
-        return listing_view(data, ReportFilter(group="LZF"), [])
+        return listing_view(data, ReportFilter(group=group), [])
 
 
 def test_listing_scope_excludes_four_sites_and_keeps_same_listing_separate() -> None:
@@ -164,7 +166,7 @@ def test_listing_scope_excludes_four_sites_and_keeps_same_listing_separate() -> 
     assert set(report.excluded_sites) == {"MX", "FR", "ES", "IT"}
     assert {item.site for item in report.items}.isdisjoint(report.excluded_sites)
     same = [item for item in report.items if item.listing == "同名"]
-    assert {item.site for item in same} == {"US", "CA"}
+    assert {item.site for item in report.items} == {"US"}
     assert all(1 <= len(item.issues) <= 5 for item in report.items)
     retired = next(item for item in same if item.site == "US")
     assert retired.mode == "retired"
@@ -172,6 +174,15 @@ def test_listing_scope_excludes_four_sites_and_keeps_same_listing_separate() -> 
     us = next(item for item in same if item.site == "US").business
     assert us is not None
     assert number(us.current["revenue"]) == Decimal(900)
+    # 仅LZF限制US；其他组同名LISTING仍须按站点隔离。
+    for fact in data.operating:
+        fact.source.group = "HCM"
+    position.group = "HCM"
+    other = listing_result(data, [], group="HCM")
+    same = [item for item in other.items if item.listing == "同名"]
+    assert {item.site for item in same} == {"US", "CA"}
+    ca = next(item for item in same if item.site == "CA").business
+    assert ca is not None and number(ca.current["revenue"]) == Decimal(200)
 
 
 def test_inactive_objects_only_keep_stock_or_current_erosion() -> None:
