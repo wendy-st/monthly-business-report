@@ -1,16 +1,24 @@
-import { useState } from "react";
+import { useReportHeaderOffset } from "../shared/report/useReportHeaderOffset";
+import { lazy, Suspense, useState } from "react";
 import { Alert, Button, Layout, Modal, Tag, Typography } from "antd";
 import { ReportNavigation } from "./ReportNavigation";
 import { FinancialPage } from "../features/reports/FinancialPage";
 import { BusinessPage } from "../features/reports/BusinessPage";
+import { AnnualPage } from "../features/reports/AnnualPage";
 import { InventoryPage } from "../features/reports/InventoryPage";
 import { ListingPage } from "../features/reports/ListingPage";
 import { SourcesPage } from "../features/reports/SourcesPage";
 import { useReport } from "../features/reports/api";
 
 const groupOrder = ["LZF", "HCM", "Ash", "KAYO-北美", "KAYO-欧日", "薄底水鞋"];
+const ItkPage = lazy(() =>
+  import("../features/itk/ItkPage").then((module) => ({
+    default: module.ItkPage,
+  })),
+);
 
 export function LiveReportApp() {
+  const body = useReportHeaderOffset();
   const [page, setPage] = useState("overview");
   const [group, setGroup] = useState("LZF");
   const [showBasis, setShowBasis] = useState(false);
@@ -73,14 +81,16 @@ export function LiveReportApp() {
           </Button>
         </div>
       </Layout.Sider>
-      <Layout className="report-body">
+      <Layout className="report-body" ref={body}>
         <header className="report-header">
           <div>
             <Typography.Title level={1}>
               2026年9月月度经营分析报告
             </Typography.Title>
             <Typography.Text type="secondary">
-              经营金额为人民币；成本费用保留核算方向，费用负担另按展示口径呈现。库存规模与周转天数分源核算。
+              {page === "itk"
+                ? "ITK金额按站点展示原币，未换汇；数据为源表样本，不代表全市场。"
+                : "经营金额为人民币；成本费用保留核算方向，费用负担另按展示口径呈现。库存规模与周转天数分源核算。"}
             </Typography.Text>
           </div>
           <Tag className="preview-label" color="processing">
@@ -97,13 +107,19 @@ export function LiveReportApp() {
           )}
           {page === "overview" && <FinancialPage kind="overview" />}
           {page === "business" && <BusinessPage key={group} group={group} />}
+          {page === "annual" && <AnnualPage group={group} />}
           {page === "products" && <FinancialPage kind="products" />}
           {page === "inventory" && (
             <InventoryPage groups={groups} sites={metadata.data?.site ?? []} />
           )}
-          {page === "listing" && (
-            <ListingPage key={group} group={group} groups={groups} />
-          )}
+          <div hidden={page !== "itk"}>
+            {page === "itk" && (
+              <Suspense fallback={<p>正在加载ITK看板…</p>}>
+                <ItkPage />
+              </Suspense>
+            )}
+          </div>
+          {page === "listing" && <ListingPage key={group} group={group} />}
           {page === "sources" && <SourcesPage />}
         </Layout.Content>
       </Layout>
@@ -123,7 +139,7 @@ export function LiveReportApp() {
           实际、剔价、剔价剔退款分别核算。缺记录、缺字段、零分母和还原依据不足保留不可计算状态；原始Excel未重算，外链未刷新。
         </Typography.Paragraph>
         <Typography.Paragraph>
-          第5模块仅本期沿用新品、UK推广、停运/废弃及MX简版，排除FR/ES/IT；经营总览仍包含这些站点。其他月份待导入后开放。
+          LISTING分析问题清单按小组、站点、LISTING归总经营归因与库存健康，排除MX/FR/ES/IT；停运、废弃仅分析利润侵蚀及库存清理。经营总览仍保留全部站点。其他月份待导入后开放。
         </Typography.Paragraph>
       </Modal>
     </Layout>

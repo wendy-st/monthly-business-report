@@ -9,6 +9,7 @@ from pydantic import TypeAdapter
 
 from app.schemas.business import BusinessView
 from app.schemas.overview import OverviewView
+from app.schemas.products import ProductRefundQuery
 from app.schemas.reports import FinancialView, HistoryFilter, MetricRow, ReportFilter
 from app.services.business_report import business_details
 from app.services.cost_analysis import BasisAnalysis, analyses
@@ -18,8 +19,11 @@ from app.services.inventory_report import build_turnover, inventory_view
 from app.services.inventory_sources import InventoryFact
 from app.services.listing_report import listing_view
 from app.services.overview_report import overview_details
+from app.services.product_refunds import refund_analysis
+from app.services.product_report import product_view
 from app.services.report_cache import ReportCache
 from app.services.report_dataset import ReportDataset, open_dataset
+from app.services.shipping_standards import shipping_identity
 
 OVERVIEW_GRAINS = {"groups", "sites", "categories", "category3", "listings", "shops"}
 DISPLAY_AMOUNTS = {"units", "revenue", "profit", "margin"}
@@ -66,6 +70,8 @@ class PreparedReports:
     ) -> Path:
         filters = filters or ReportFilter()
         parameters = filters.model_dump()
+        if resource in {"inventory", "listing"}:
+            parameters["shipping_source"] = shipping_identity()
         if resource == "financial" and compact:
             return self.cache.result(
                 "financial-display",
@@ -77,6 +83,12 @@ class PreparedReports:
         return self.cache.result(resource, parameters, lambda: self.build(resource, filters))
 
     def build(self, resource: str, filters: ReportFilter) -> object:
+        if resource == "product-refunds" and isinstance(filters, ProductRefundQuery):
+            scope = ReportFilter(**filters.model_dump(exclude={"min_sales"}))
+            financial = FinancialView.model_validate_json(
+                self.path("financial", scope).read_bytes()
+            )
+            return refund_analysis(financial, filters.min_sales)
         if resource == "business":
             financial = FinancialView.model_validate_json(
                 self.path("financial", filters).read_bytes()
@@ -99,6 +111,11 @@ class PreparedReports:
                 **financial_projection(financial).model_dump(),
                 overview=overview_details(financial, costs),
             )
+        if resource == "products":
+            financial = FinancialView.model_validate_json(
+                self.path("financial", filters).read_bytes()
+            )
+            return product_view(self.dataset, financial, filters)
         if resource == "sources":
             return self.cache.manifest
         if resource == "options":

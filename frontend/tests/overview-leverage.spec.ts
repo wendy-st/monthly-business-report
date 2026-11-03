@@ -209,9 +209,9 @@ test("总览缺失金额显示破折号，业务组继续使用独立布局", as
   ).toHaveText("—");
   await page.unroute("**/api/reports/2026-09/costs?*");
   await page
-    .getByRole("menuitem", { name: "2. 业务组经营分析", exact: true })
+    .getByRole("menuitem", { name: "月度经营分析", exact: true })
     .click();
-  await page.getByRole("menuitem", { name: "2.2 HCM", exact: true }).click();
+  await page.getByRole("menuitem", { name: "HCM", exact: true }).click();
   await expect(page.locator(".diagnostic-blocks")).toBeVisible();
   await expect(
     page.locator(".diagnostic-blocks").getByText("项目弹性", { exact: true }),

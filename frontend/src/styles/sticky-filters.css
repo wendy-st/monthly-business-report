@@ -1,0 +1,19 @@
+.sticky-filter-bar {
+  position: sticky;
+  top: var(--report-header-height, 114px);
+  z-index: calc(var(--report-header-layer) - 2);
+  background: var(--color-surface-topbar);
+  min-width: 0;
+}
+.inventory-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+}
+@media print {
+  .sticky-filter-bar,
+  .business-page .business-filters,
+  .history-dashboard .history-filter-toolbar {
+    position: static;
+  }
+}

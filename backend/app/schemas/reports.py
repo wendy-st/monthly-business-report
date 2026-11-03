@@ -39,8 +39,14 @@ class MetricRow(BaseModel):
     changes: dict[str, str | None] = Field(default_factory=dict)
 
 
+YearBasis = Literal["calendar", "fiscal"]
+PeriodScope = Literal["full", "h1", "h2"]
+
+
 class HistoryFilter(ReportFilter):
     years: str = Field(default="2026", pattern=r"^202[0-6](,202[0-6]){0,6}$")
+    year_basis: YearBasis = "calendar"
+    period_scope: PeriodScope = "full"
 
 
 class WaterfallStep(BaseModel):

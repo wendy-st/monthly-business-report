@@ -6,7 +6,7 @@ import {
   categoryInventoryPreview,
   turnoverPreview,
 } from "./fixtures";
-import { formatNumber } from "../../shared/report/format";
+import { formatNumber, tooltipValue } from "../../shared/report/format";
 
 export function InventoryTurnover({
   fixture,
@@ -45,7 +45,10 @@ export function InventoryTurnover({
             <ReportChart
               summary={`${kind}周转月度趋势为合成样例，2025虚线、2026实线。`}
               option={{
-                tooltip: { trigger: "axis" },
+                tooltip: {
+                  trigger: "axis",
+                  valueFormatter: tooltipValue("天"),
+                },
                 legend: {
                   top: 10,
                   data: [

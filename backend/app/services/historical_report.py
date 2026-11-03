@@ -1,33 +1,24 @@
-"""冻结历史利润独立展示，不用经营重算利润覆盖历史源利润。"""
-
-from __future__ import annotations
+"""年度经营分析：历史金额只取近6年LISTING源表，产品表仅提供定位。"""
 
 from collections import defaultdict
 from decimal import Decimal
 
 from pydantic import BaseModel
 
-from app.schemas.reports import MetricRow, ReportFilter
-from app.services.financial_model import (
-    Amounts,
-    aggregate,
-    combine,
-    financials,
-    number,
-    ratio,
-    serialize,
+from app.schemas.reports import HistoryFilter, MetricRow, PeriodScope, ReportFilter, YearBasis
+from app.services.financial_model import combine, number
+from app.services.history_analysis import (
+    annual_comparison,
+    cumulative_summary,
+    insights,
+    listing_breakdown,
+    quadrant,
 )
+from app.services.history_data import SEPTEMBER_POSITION_OVERRIDES, historical_group, history_rows
+from app.services.history_data import historical_amounts as historical_amounts
+from app.services.history_periods import HistoryCalendar
 from app.services.report_dataset import ReportDataset
 from app.services.source_import import SourceRecord
-
-HISTORICAL_NAMES = {
-    "赔偿成本&弃置成本": "赔偿成本",
-    "基本月度仓储费": "基础仓储费",
-    "海外仓费用": "海外仓",
-    "FBA佣金": "佣金",
-    "FBA赔偿": "赔偿",
-    "礼品补贴": "礼品卡补贴",
-}
 
 
 class HistoryView(BaseModel):
@@ -40,20 +31,87 @@ class HistoryView(BaseModel):
     source_note: str
     excluded: list[MetricRow]
     options: dict[str, list[str]]
+    summary: MetricRow
+    period_label: str
+    previous_period_label: str
+    anchor_year: str
+    max_month: int
+    period_start: str
+    period_end: str
+    source_file: str
+    source_sheet: str
+    cost_trends: list[MetricRow]
+    quadrant: dict[str, str | None]
+    insights: dict[str, MetricRow | None]
+    year_basis: YearBasis
+    period_scope: PeriodScope
+    year_labels: dict[str, str]
+    month_order: list[int]
+
+
+def product_positions(dataset: ReportDataset) -> dict[tuple[str, str, str], str]:
+    """定位冲突保留待确认；原稿手工覆盖优先于源款式定位。"""
+    positions: dict[tuple[str, str, str], set[str]] = defaultdict(set)
+    for row in dataset.records("products"):
+        position = (row.raw.get("产品定位") or "").strip()
+        if position:
+            positions[historical_group(row), row.site, row.listing].add(position)
+    labels = {
+        key: next(iter(values)) if len(values) == 1 else "定位待确认：" + "、".join(sorted(values))
+        for key, values in positions.items()
+    }
+    if dataset.manifest.get("report_month") == "2026-09":
+        labels.update(SEPTEMBER_POSITION_OVERRIDES)
+    return labels
+
+
+def eligibility(
+    dataset: ReportDataset, records: list[SourceRecord], year: str
+) -> tuple[set[tuple[str, str]], dict[tuple[str, str], str], dict[tuple[str, str, str], str]]:
+    """沿用原稿资格范围：先按站点＋LISTING跨小组判断，再筛选小组。"""
+    labels = product_positions(dataset)
+    fallback: dict[tuple[str, str], set[str]] = defaultdict(set)
+    for key, position in labels.items():
+        if not position.startswith("定位待确认："):
+            fallback[key[1:]].add(position)
+    sales: dict[tuple[str, str], list[Decimal | None]] = defaultdict(list)
+    for row in records:
+        if row.period.startswith(year):
+            sales[row.site, row.listing].append(number(row.raw.get("销售金额")))
+    reasons = {}
+    stopped = set()
+    for row in records:
+        key = historical_group(row), row.site, row.listing
+        values = fallback[row.site, row.listing]
+        if (key not in labels or labels[key].startswith("定位待确认：")) and len(values) == 1:
+            labels[key] = next(iter(values))
+        position = labels.get(key, "")
+        if not position.startswith("定位待确认：") and any(
+            word in position for word in ("停运", "废弃")
+        ):
+            stopped.add((row.site, row.listing))
+    for listing_key in {(row.site, row.listing) for row in records}:
+        total = combine(sales[listing_key])
+        if total is None or total <= 0:
+            reasons[listing_key] = "本年累计销售金额非正或缺失"
+        elif listing_key in stopped:
+            reasons[listing_key] = "定位含停运或废弃"
+    active = {(row.site, row.listing) for row in records} - reasons.keys()
+    return active, reasons, labels
 
 
 def historical_best(
-    dataset: ReportDataset, records: list[SourceRecord]
+    records: list[SourceRecord],
+    reasons: dict[tuple[str, str], str],
+    positions: dict[tuple[str, str, str], str],
+    period: str,
 ) -> tuple[list[MetricRow], list[MetricRow]]:
-    positions: dict[tuple[str, str, str], set[str]] = defaultdict(set)
-    for source in dataset.records("products"):
-        positions[source.group, source.site, source.listing].add(source.raw.get("产品定位") or "")
     pools: dict[tuple[str, str, str], list[SourceRecord]] = defaultdict(list)
     for source in records:
         pools[historical_group(source), source.site, source.listing].append(source)
     best, excluded = [], []
-    for key, listing_records in pools.items():
-        monthly = history_rows(listing_records, "monthly")
+    for key, sources in pools.items():
+        monthly = history_rows(sources, "monthly")
         available = [row for row in monthly if row.current["profit"] is not None]
         if not available:
             continue
@@ -64,31 +122,20 @@ def historical_best(
                 number(row.current["revenue"]) or 0,
             ),
         )
-        current = next((row for row in monthly if row.dimensions["month"] == "2026-09"), None)
-        current_profit = number(current.current["profit"]) if current else Decimal(0)
-        peak_profit = number(peak.current["profit"])
-        peak.current["gap"] = (
-            str(peak_profit - current_profit)
-            if peak_profit is not None and current_profit is not None
-            else None
-        )
-        peak.current["current_profit"] = str(current_profit) if current_profit is not None else None
-        position = "、".join(sorted(positions[key]))
+        current = next((row for row in monthly if row.dimensions["month"] == period), None)
+        for metric in ("profit", "revenue", "margin"):
+            value = current.current.get(metric) if current else None
+            peak.current[f"current_{metric}"] = value
+            left, right = number(value), number(peak.current.get(metric))
+            peak.current[f"{metric}_difference"] = (
+                str(left - right) if left is not None and right is not None else None
+            )
+        difference = number(peak.current["profit_difference"])
+        peak.current["gap"] = str(-difference) if difference is not None else None
         peak.dimensions.update(dict(zip(("group", "site", "listing"), key, strict=True)))
-        peak.dimensions["position"] = position
+        peak.dimensions["position"] = positions.get(key, "")
         peak.key, peak.label = "|".join(key), " / ".join(key)
-        yearly_sales = combine(
-            historical_amounts(source)["sales_amount"]
-            for source in listing_records
-            if source.period.startswith("2026")
-        )
-        reason = (
-            "定位含停运或废弃"
-            if any(label in position for label in ("停运", "废弃"))
-            else "本年累计销售金额非正或缺失"
-            if yearly_sales is None or yearly_sales <= 0
-            else ""
-        )
+        reason = reasons.get(key[1:], "")
         if reason:
             peak.dimensions["excluded_reason"] = reason
             excluded.append(peak)
@@ -97,120 +144,74 @@ def historical_best(
     return sorted(best, key=lambda row: number(row.current["gap"]) or 0, reverse=True), excluded
 
 
-def historical_group(source: SourceRecord) -> str:
-    if source.group == "KAYO":
-        if source.site in {"US", "MX", "CA"}:
-            return "KAYO-北美"
-        if source.site in {"UK", "DE", "FR", "IT", "ES", "JP"}:
-            return "KAYO-欧日"
-    if (
-        source.group == "JASON"
-        and source.site in {"US", "MX"}
-        and source.listing in {"SK001", "SK002", "SWS001", "SWS002"}
-    ):
-        return "薄底水鞋"
-    return source.group or "未分配"
-
-
-def historical_amounts(source: SourceRecord) -> Amounts:
-    raw = source.raw.copy()
-    for target, origin in HISTORICAL_NAMES.items():
-        raw[target] = raw.get(origin)
-    result = financials(raw)
-    result["gross_profit"] = number(raw.get("主营业务利润"))
-    result["operating_profit"] = number(raw.get("产品营业利润"))
-    result["profit"] = number(raw.get("产品净利润"))
-    result["margin"] = ratio(result["profit"], result["revenue"])
-    result["gross_margin"] = ratio(result["gross_profit"], result["revenue"])
-    return result
-
-
-def frozen_summary(records: list[SourceRecord], key: str, values: dict[str, str]) -> MetricRow:
-    rows = [historical_amounts(source) for source in records]
-    amounts = aggregate(rows)
-    for metric in ("gross_profit", "operating_profit", "profit"):
-        amounts[metric] = combine(item[metric] for item in rows)
-    amounts["margin"] = ratio(amounts["profit"], amounts["revenue"])
-    amounts["gross_margin"] = ratio(amounts["gross_profit"], amounts["revenue"])
-    return MetricRow(
-        key=key,
-        label=" / ".join(values.values()),
-        dimensions=values,
-        current=serialize(amounts),
-        previous={},
-        year_ago={},
-        record_count=len(records),
-        status="OK",
-        source_rows=[item.row for item in records],
-    )
-
-
-def history_rows(records: list[SourceRecord], grain: str) -> list[MetricRow]:
-    pools: dict[tuple[str, ...], list[SourceRecord]] = defaultdict(list)
-    for source in records:
-        key: tuple[str, ...]
-        names: tuple[str, ...]
-        if grain == "annual":
-            key = (source.period[:4],)
-            names = ("year",)
-        elif grain == "quarterly":
-            key = (f"{source.period[:4]}-Q{(int(source.period[5:]) - 1) // 3 + 1}",)
-            names = ("quarter",)
-        elif grain == "monthly":
-            key = (source.period,)
-            names = ("month",)
-        else:
-            key = (historical_group(source), source.site, source.listing)
-            names = ("group", "site", "listing")
-        pools[key].append(source)
-    return (
-        [
-            frozen_summary(items, "|".join(key), dict(zip(names, key, strict=True)))
-            for key, items in sorted(pools.items())
-        ]
-        if pools
-        else []
-    )
+def scope_records(records: list[SourceRecord], filters: ReportFilter) -> list[SourceRecord]:
+    return [
+        row
+        for row in records
+        if (not filters.site or row.site == filters.site)
+        and (not filters.listing or row.listing == filters.listing)
+    ]
 
 
 def history_view(dataset: ReportDataset, filters: ReportFilter, years: list[str]) -> HistoryView:
+    cutoff = str(dataset.manifest.get("report_month", "2026-09"))
+    all_records = [
+        row
+        for row in dataset.records("history")
+        if row.period and row.listing and row.period <= cutoff
+    ]
+    active, reasons, positions = eligibility(dataset, all_records, cutoff[:4])
     scoped = [
-        source
-        for source in dataset.records("history")
-        if source.period
-        and source.listing
-        and source.period <= "2026-09"
-        and (not filters.group or historical_group(source) == filters.group)
+        row for row in all_records if not filters.group or historical_group(row) == filters.group
     ]
-    records = [
-        source
-        for source in scoped
-        if source.period
-        and source.listing
-        and source.period <= "2026-09"
-        and (not filters.group or historical_group(source) == filters.group)
-        and (not filters.site or source.site == filters.site)
-        and (not filters.listing or source.listing == filters.listing)
-    ]
-    selected = [source for source in records if source.period[:4] in years]
-    best, excluded = historical_best(dataset, records)
+    eligible = [row for row in scoped if (row.site, row.listing) in active]
+    records = scope_records(eligible, filters)
+    period_start = min((row.period for row in all_records), default=cutoff)
+    calendar = HistoryCalendar(
+        filters.year_basis if isinstance(filters, HistoryFilter) else "calendar",
+        filters.period_scope if isinstance(filters, HistoryFilter) else "full",
+        cutoff,
+        period_start,
+    )
+    selected_years = years or [calendar.year(cutoff)]
+    anchor = max(selected_years)
+    selected = calendar.selected(records, selected_years)
+    # 业务拆解、象限和洞察不随单个趋势LISTING缩窄，保留站点内横向对比。
+    site_records = scope_records(eligible, filters.model_copy(update={"listing": ""}))
+    breakdown = listing_breakdown(calendar.select(site_records, anchor))
+    best, excluded = historical_best(scope_records(scoped, filters), reasons, positions, cutoff)
+    period_end = max((row.period for row in all_records), default="")
+    source = all_records[0] if all_records else None
+    available_years = sorted({calendar.year(row.period) for row in all_records})
     return HistoryView(
-        annual=history_rows(records, "annual"),
-        quarterly=history_rows(selected, "quarterly")[-12:],
-        monthly=history_rows(selected, "monthly")[-24:],
-        listings=history_rows(selected, "listings"),
+        annual=annual_comparison(records, calendar),
+        quarterly=calendar.quarterly(selected)[-12:],
+        monthly=calendar.monthly(selected)[-24:],
+        listings=breakdown,
         best_months=best,
-        years=sorted({source.period[:4] for source in records}),
-        source_note="历史LISTING结果表：利润保留源字段；年度为完整年度汇总，季/月按所选年份。",
+        years=available_years,
+        source_note="金额均取近6年LISTING数据表；净销售额=销售金额+退货金额，净利润保留产品净利润源字段。所有区域按站点＋LISTING跨组排除本年无销售及停运/废弃组合；定位引用产品基础信息，并沿用原9月报告已确认的手工覆盖，其他冲突保留待确认。",
         excluded=excluded,
         options={
-            "site": sorted({source.site for source in scoped}),
+            "site": sorted({row.site for row in eligible}),
             "listing": sorted(
-                {
-                    source.listing
-                    for source in scoped
-                    if not filters.site or source.site == filters.site
-                }
+                {row.listing for row in eligible if not filters.site or row.site == filters.site}
             ),
         },
+        summary=cumulative_summary(records, anchor, calendar),
+        period_label=calendar.label(anchor),
+        previous_period_label=calendar.previous_label(anchor),
+        anchor_year=anchor,
+        max_month=int(calendar.period(anchor, max(1, calendar.end_index(anchor)))[5:]),
+        period_start=period_start,
+        period_end=period_end,
+        source_file=source.file if source else "",
+        source_sheet=source.sheet if source else "",
+        cost_trends=calendar.monthly(selected),
+        quadrant=quadrant(breakdown),
+        insights=insights(breakdown),
+        year_basis=calendar.basis,
+        period_scope=calendar.scope,
+        year_labels={year: calendar.year_label(year) for year in available_years},
+        month_order=calendar.month_order,
     )

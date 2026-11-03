@@ -7,7 +7,7 @@ test.use({ viewport: { width: 1440, height: 1000 } });
 async function enter(page: import("@playwright/test").Page) {
   await page.goto("/");
   await page
-    .getByRole("menuitem", { name: "2. 业务组经营分析", exact: true })
+    .getByRole("menuitem", { name: "月度经营分析", exact: true })
     .click();
   await expect(
     page.locator(".business-page .metric-value").first(),
@@ -22,17 +22,15 @@ test("整页六组真实指标、三级品类和明细完整，保留含MX同比
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await enter(page);
-  for (const [index, group] of [
+  for (const group of [
     "LZF",
     "HCM",
     "Ash",
     "KAYO-北美",
     "KAYO-欧日",
     "薄底水鞋",
-  ].entries()) {
-    await page
-      .getByRole("menuitem", { name: `2.${index + 1} ${group}`, exact: true })
-      .click();
+  ]) {
+    await page.getByRole("menuitem", { name: group, exact: true }).click();
     const params = new URLSearchParams({
       group,
       ...(group === "KAYO-欧日" ? { site: "JP" } : {}),
@@ -167,9 +165,7 @@ test("同名LISTING按站点隔离，欧洲桶和JP默认值正确", async ({ pa
   await expect(
     page.locator(".business-full-listings tbody tr").first(),
   ).toContainText("KP001");
-  await page
-    .getByRole("menuitem", { name: "2.5 KAYO-欧日", exact: true })
-    .click();
+  await page.getByRole("menuitem", { name: "KAYO-欧日", exact: true }).click();
   await expect(
     page.locator(".business-page .metric-value").first(),
   ).toContainText("KAYO-欧日 / JP");
@@ -257,7 +253,7 @@ test("业务页失败可重试，LISTING特殊字符按文本展示", async ({ p
   });
   await page.goto("/");
   await page
-    .getByRole("menuitem", { name: "2. 业务组经营分析", exact: true })
+    .getByRole("menuitem", { name: "月度经营分析", exact: true })
     .click();
   await expect(
     page.getByText("9月数据尚未就绪，请启动后端或完成本地导入。", {

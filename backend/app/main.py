@@ -8,8 +8,11 @@ from fastapi.responses import FileResponse
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+from app.itk_api import router as itk_router
 from app.schemas.business import BusinessView
+from app.schemas.inventory import InventoryView
 from app.schemas.overview import OverviewView
+from app.schemas.products import ProductRefundQuery, ProductRefundView, ProductView
 from app.schemas.reports import (
     FinancialQuery,
     FinancialView,
@@ -19,12 +22,12 @@ from app.schemas.reports import (
 )
 from app.services.cost_analysis import BasisAnalysis
 from app.services.historical_report import HistoryView
-from app.services.inventory_report import InventoryView
 from app.services.listing_report import ListingView
 from app.services.prepared_reports import PreparedReports
 from app.services.report_cache import data_root
 
 app = FastAPI(title="月度经营报告", version="0.1.0")
+app.include_router(itk_router)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver"])
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
@@ -62,12 +65,15 @@ def options(month: str) -> FileResponse:
 
 
 @app.get(
-    "/api/reports/{month}/financial", response_model=FinancialView | OverviewView | BusinessView
+    "/api/reports/{month}/financial",
+    response_model=FinancialView | OverviewView | BusinessView | ProductView,
 )
 def financial(month: str, filters: Annotated[FinancialQuery, Query()]) -> FileResponse:
     scope = ReportFilter(**filters.model_dump(exclude={"view"}))
     if filters.view == "overview":
         return result(month, "overview", scope)
+    if filters.view == "products":
+        return result(month, "products", scope)
     if filters.view == "business":
         return result(month, "business", scope)
     return result(month, "financial", scope, compact=filters.view in {"overview", "business"})
@@ -76,6 +82,11 @@ def financial(month: str, filters: Annotated[FinancialQuery, Query()]) -> FileRe
 @app.get("/api/reports/{month}/sources", response_model=SourceStatus)
 def sources(month: str) -> FileResponse:
     return result(month, "sources")
+
+
+@app.get("/api/reports/{month}/product-refunds", response_model=ProductRefundView)
+def product_refunds(month: str, filters: Annotated[ProductRefundQuery, Query()]) -> FileResponse:
+    return result(month, "product-refunds", filters)
 
 
 @app.get("/api/reports/{month}/costs", response_model=list[BasisAnalysis])

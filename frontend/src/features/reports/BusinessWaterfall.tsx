@@ -60,7 +60,7 @@ export function BusinessWaterfall({
         activeBasis="actual"
         changes={data.business.conversion[mode]}
       />
-      <ol className="business-conclusions" aria-label="业务组经营分析结论">
+      <ol className="business-conclusions" aria-label="月度经营分析结论">
         {data.business.conclusions[mode]?.map((item) => (
           <li key={item.label}>
             <strong>{item.label}</strong>

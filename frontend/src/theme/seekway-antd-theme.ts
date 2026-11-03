@@ -6,6 +6,8 @@ export const reportColors = {
   chartGrid: "#edf2fa",
   chartPurple: "#7c3aed",
   chartRed: "#dc2626",
+  historyLine: "#f59e0b",
+  historyProfit: "#0f8a79",
   waterfallTotal: "#334155",
   primarySubtle: "#eff6ff",
   primaryHover: "#1d4ed8",
@@ -27,6 +29,21 @@ export const reportColors = {
   tableHover: "#f8fcfa",
   border: "#cdd8e6",
   borderSecondary: "#d9e1ec",
+} as const;
+
+/** 库存原报告的比较线、图例及表格语义色，仅由库存页面使用。 */
+export const inventoryColors = {
+  priorTotal: "#f2b680",
+  priorFba: "#dfb6ca",
+  currentTotal: "#0072b2",
+  currentFba: "#009e73",
+  legend: "#475467",
+  grid: "#edf1f7",
+  tableHead: "#f8fafc",
+  tableHeader: "#344054",
+  shareCell: "#f3f4f6",
+  improvementBg: "#ecfdf3",
+  deteriorationBg: "#fef3f2",
 } as const;
 
 /** SEEKWAY 标准组件主题；业务页面不得重复定义同义视觉值。 */

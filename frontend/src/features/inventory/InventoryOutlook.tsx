@@ -1,5 +1,6 @@
 import { Card } from "antd";
 import { ReportChart } from "../../shared/report/ReportChart";
+import { tooltipValue } from "../../shared/report/format";
 import {
   forecastMonths,
   inventoryPreview,
@@ -19,7 +20,7 @@ export function InventoryOutlook() {
       <ReportChart
         summary="合成样例：所有仓库与FBA+海外仓未来可支持天数；不是正式预测。"
         option={{
-          tooltip: { trigger: "axis" },
+          tooltip: { trigger: "axis", valueFormatter: tooltipValue("天") },
           legend: { top: 4, data: ["所有库存", "FBA+海外仓"] },
           grid: { left: 48, right: 24, top: 48, bottom: 40 },
           xAxis: { type: "category", data: forecastMonths },

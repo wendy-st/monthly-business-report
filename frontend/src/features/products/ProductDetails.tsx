@@ -4,7 +4,6 @@ import {
   Card,
   Descriptions,
   Drawer,
-  Segmented,
   Space,
   Table,
   Tag,
@@ -20,7 +19,6 @@ export function ProductDetails({ rows }: { rows: Product[] }) {
       tab === "全部" || (tab === "盈利款" ? row.profit >= 0 : row.profit < 0),
   );
   const [selected, setSelected] = useState<Product>();
-  const [basis, setBasis] = useState("实际");
   return (
     <>
       <h2 className="section-heading">三、款式盈利与成本诊断明细</h2>
@@ -105,7 +103,6 @@ export function ProductDetails({ rows }: { rows: Product[] }) {
                   type="link"
                   onClick={() => {
                     setSelected(row);
-                    setBasis("实际");
                   }}
                 >
                   查看
@@ -137,17 +134,6 @@ export function ProductDetails({ rows }: { rows: Product[] }) {
             },
           ]}
         />
-        <h3 className="section-heading">LISTING 历史验证</h3>
-        <Segmented
-          aria-label="历史成本口径"
-          options={["实际", "剔价", "剔价剔退款"]}
-          value={basis}
-          onChange={setBasis}
-        />
-        <Typography.Paragraph className="generate-button">
-          当前查看：{basis}
-          。历史与三种成本口径尚未接入正式数据，切换仅演示交互。
-        </Typography.Paragraph>
       </Drawer>
     </>
   );

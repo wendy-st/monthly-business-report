@@ -3,6 +3,7 @@
 import json
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -53,6 +54,40 @@ def test_failed_generation_never_publishes_partial_result(tmp_path: Path) -> Non
     path = cache.result("financial", {}, lambda: {"amount": None})
     assert json.loads(path.read_bytes()) == {"amount": None}
     assert not list(cache.directory.glob("*.pending"))
+
+
+def test_shipping_standard_change_invalidates_inventory_and_listing_only(tmp_path: Path) -> None:
+    reports = PreparedReports(cache_root(tmp_path), "rules-one")
+    with (
+        patch.object(reports, "build", return_value={"synthetic": True}),
+        patch(
+            "app.services.prepared_reports.shipping_identity", return_value="standard-one"
+        ) as identity,
+    ):
+        before = {
+            resource: reports.path(resource) for resource in ("inventory", "listing", "costs")
+        }
+        identity.return_value = "standard-two"
+        after = {resource: reports.path(resource) for resource in before}
+    assert before["inventory"] != after["inventory"]
+    assert before["listing"] != after["listing"]
+    assert before["costs"] == after["costs"]
+
+
+def test_prepared_inventory_site_survives_restart_without_loading_full_sources(
+    tmp_path: Path,
+) -> None:
+    root = cache_root(tmp_path)
+    filters = ReportFilter(group="HCM", site="US")
+    prepared = PreparedReports(root, "rules-one")
+    with patch("app.services.prepared_reports.shipping_identity", return_value="standard-one"):
+        with patch.object(prepared, "build", return_value={"synthetic": True}):
+            expected = prepared.path("inventory", filters)
+        reopened = PreparedReports(root, "rules-one")
+        with patch.object(reopened, "build", side_effect=AssertionError("不应首次读取全量库存")):
+            assert reopened.path("inventory", filters) == expected
+        assert "dataset" not in reopened.__dict__
+        assert "turnover" not in reopened.__dict__
 
 
 def test_compact_financial_result_keeps_values_and_lineage_without_loading_sources(

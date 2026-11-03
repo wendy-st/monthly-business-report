@@ -1,5 +1,6 @@
 import { reportColors } from "../../theme/seekway-antd-theme";
 import type { EChartsCoreOption } from "echarts/core";
+import { tooltipValue } from "./format";
 
 const grid = { left: 76, right: 76, top: 52, bottom: 56 };
 
@@ -56,6 +57,7 @@ export function trendOption(
       {
         name: "净销售额",
         type: "bar",
+        tooltip: { valueFormatter: tooltipValue("万") },
         data: revenue,
         barMaxWidth: 34,
         barGap: "0%",
@@ -71,6 +73,7 @@ export function trendOption(
       {
         name: "净利润",
         type: "bar",
+        tooltip: { valueFormatter: tooltipValue("万") },
         data: profit,
         barMaxWidth: 34,
         barGap: "0%",
@@ -90,6 +93,7 @@ export function trendOption(
       {
         name: "净利率",
         type: "line",
+        tooltip: { valueFormatter: tooltipValue("%") },
         yAxisIndex: 1,
         data: rates.map((value) => ({
           value,
@@ -132,8 +136,10 @@ export function donutOption(
           : (params: { name?: string; value?: unknown }) =>
               `${params.name}\n${share(Number(params.value))} / ${(Number(params.value) / 10000).toFixed(2)}万`,
       renderMode: "richText",
-      valueFormatter: (value: unknown) =>
-        `${Number(value).toLocaleString("zh-CN", { maximumFractionDigits: 2 })}${unit}`,
+      valueFormatter: tooltipValue(
+        unit === "元" ? "万" : unit,
+        unit === "元" ? 10000 : 1,
+      ),
     },
     color: [
       reportColors.primary,
@@ -205,7 +211,7 @@ export function barsOption(
   seriesName: string,
 ): EChartsCoreOption {
   return {
-    tooltip: { trigger: "axis" },
+    tooltip: { trigger: "axis", valueFormatter: tooltipValue(unit) },
     legend: { data: [seriesName] },
     grid,
     xAxis: { type: "category", data: names },

@@ -1,5 +1,6 @@
 import { Card, Empty, Table } from "antd";
 import { ReportChart } from "../../shared/report/ReportChart";
+import { tooltipValue } from "../../shared/report/format";
 import type { Product } from "./fixtures";
 
 import { CostMatrix } from "./ProductMatrix";
@@ -17,7 +18,11 @@ export function CostDiagnostics({ rows }: { rows: Product[] }) {
           </small>
         </span>
       </h2>
-      <CostMatrix rows={rows} dimension="group" title="产品毛利成本矩阵" />
+      <CostMatrix
+        rows={rows}
+        dimension="category1"
+        title="一级品类产品毛利成本矩阵"
+      />
       <CostMatrix
         rows={rows}
         dimension="category2"
@@ -35,7 +40,7 @@ export function CostDiagnostics({ rows }: { rows: Product[] }) {
             <ReportChart
               summary="各款式销售成本率、头程费率和其他成本率的合成对照；前两项数值见上表，其他成本率均为0%。"
               option={{
-                tooltip: { trigger: "axis" },
+                tooltip: { trigger: "axis", valueFormatter: tooltipValue("%") },
                 legend: { data: ["销售成本率", "头程费率", "其他成本率"] },
                 grid: { left: 48, right: 24, top: 48, bottom: 40 },
                 xAxis: {

@@ -174,10 +174,15 @@ def test_overview_api_contract_keeps_other_views_and_validates_query(
     overview = main.financial("2026-09", FinancialQuery(view="overview"))
     assert overview.status_code == 200
     assert len(json.loads(Path(overview.path).read_bytes())["overview"]["sales_top10"]) == 2
-    for view in ("full", "business", "products"):
+    for view in ("full", "business"):
         response = main.financial("2026-09", FinancialQuery.model_validate({"view": view}))
         assert response.status_code == 200
         assert "overview" not in json.loads(Path(response.path).read_bytes())
+    # 品类页扩展了款式诊断及归因契约，须使用完整合成底表生成。
+    response = main.financial("2026-09", FinancialQuery(view="products", site="US"))
+    product = json.loads(Path(response.path).read_bytes())
+    assert "overview" not in product
+    assert product["product"]["style_count"] > 0
     with pytest.raises(ValidationError):
         FinancialQuery.model_validate({"view": "unknown"})
     with pytest.raises(ValidationError):

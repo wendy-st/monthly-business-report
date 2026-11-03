@@ -22,12 +22,17 @@ def prepare(root: Path) -> Path:
     groups = ["", *options["group"]]
     for group in groups:
         filters = ReportFilter(group=group)
-        for resource in ("financial", "costs", "inventory", "listing"):
+        for resource in ("financial", "products", "costs", "inventory", "listing"):
             reports.path(resource, filters)
             print(f"已准备 {group or '公司整体'} / {resource}", flush=True)
         reports.path("financial", filters, compact=True)
         if group:
             reports.path("business", filters)
+            inventory = json.loads(reports.path("inventory", filters).read_bytes())
+            # 站点筛选在用户点击前准备，避免首次请求初始化全量库存及周转事实。
+            for site in inventory["options"]["site"]:
+                reports.path("inventory", ReportFilter(group=group, site=site))
+                print(f"已准备 {group} / {site} / inventory", flush=True)
         reports.path("history", HistoryFilter(group=group))
     reports.path("overview")
     reports.cache.publish(

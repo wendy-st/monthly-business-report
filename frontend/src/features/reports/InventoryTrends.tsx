@@ -1,177 +1,161 @@
-import { Card, Segmented, Table } from "antd";
+import { Card, Empty, Segmented, theme } from "antd";
 import { useState } from "react";
 import { ReportChart } from "../../shared/report/ReportChart";
-import type { FutureRow, InventoryView } from "./contracts";
-import { InventoryTable } from "./InventoryTable";
+import type { InventoryView } from "./contracts";
+import { InventoryTurnoverDetails } from "./InventoryTurnoverDetails";
+import { turnoverOption, holdingOption } from "./inventory-chart-options";
 import { format } from "./presentation";
 
-export function InventoryTrends({ data }: { data: InventoryView }) {
+export function InventoryTrends({
+  data,
+  overview,
+}: {
+  data: InventoryView;
+  overview: boolean;
+}) {
   const [basis, setBasis] = useState("days_purchase");
-  const [scope, setScope] = useState("所有仓库");
-  const [scenario, setScenario] = useState("基础");
-  const future = data.future.filter(
-    (row) => row.scope === scope && row.scenario === scenario,
-  );
+  const { token } = theme.useToken();
+  const sharedMax =
+    Math.max(
+      1,
+      ...data.turnover
+        .filter((row) => !row.label.endsWith("YTD"))
+        .flatMap((row) => [
+          Number(row.values.days_qty ?? 0),
+          Number(row.values[basis] ?? 0),
+        ]),
+    ) * 1.12;
   return (
     <>
       <section className="inventory-section">
-        <h2 className="inventory-section-title">
-          <b>3</b>库存周转
-        </h2>
-        <Segmented
-          aria-label="库存金额口径"
-          value={basis}
-          onChange={setBasis}
-          options={[
-            { value: "days_purchase", label: "不含头程" },
-            { value: "days_amount", label: "含头程" },
-          ]}
-        />
+        {overview && (
+          <h2 className="inventory-section-title">
+            <b>3</b>库存周转
+          </h2>
+        )}
         <div className="two-column inventory-turnover-grid">
           {[
-            ["days_qty", "数量周转同期对比"],
-            [basis, "金额周转同期对比"],
-          ].map(([key, title]) => (
-            <Card key={key} title={title} size="small">
-              <ReportChart
-                sample={false}
-                summary="来源：2025、2026库存周转表；各范围先汇总有符号流量再取绝对值，分母为零留空。单位：天。"
-                option={{
-                  tooltip: { trigger: "axis" },
-                  legend: {
-                    data: [
-                      "2025所有仓库",
-                      "2026所有仓库",
-                      "2025FBA+海外仓",
-                      "2026FBA+海外仓",
-                    ],
-                  },
-                  grid: { left: 65, right: 25, top: 65, bottom: 40 },
-                  xAxis: {
-                    type: "category",
-                    data: Array.from(
-                      { length: 9 },
-                      (_, index) => `${index + 1}月`,
-                    ),
-                  },
-                  yAxis: { type: "value", name: "天" },
-                  series: ["所有仓库", "FBA+海外仓"].flatMap((scopeName) =>
-                    ["2025", "2026"].map((year) => ({
-                      name: `${year}${scopeName}`,
-                      type: "line",
-                      symbol: year === "2025" ? "diamond" : "circle",
-                      lineStyle: { type: year === "2025" ? "dashed" : "solid" },
-                      data: Array.from({ length: 9 }, (_, index) => {
-                        const value = data.turnover.find(
-                          (row) =>
-                            row.dimensions.scope === scopeName &&
-                            row.label ===
-                              `${year}-${String(index + 1).padStart(2, "0")}`,
-                        )?.values[key];
-                        return value === null || value === undefined
-                          ? null
-                          : Number(value);
-                      }),
-                    })),
-                  ),
-                }}
-              />
+            ["days_qty", "数量周转天数（2025—2026年同期对比）"],
+            [
+              basis,
+              `金额周转天数（${basis === "days_purchase" ? "不含" : "含"}头程）`,
+            ],
+          ].map(([field, title]) => (
+            <Card
+              key={field}
+              title={title}
+              size="small"
+              styles={{ header: { minHeight: 52 }, title: { fontSize: 16 } }}
+              extra={
+                field !== "days_qty" && (
+                  <Segmented
+                    aria-label="库存金额口径"
+                    value={basis}
+                    onChange={setBasis}
+                    options={[
+                      { value: "days_purchase", label: "不含头程" },
+                      { value: "days_amount", label: "含头程" },
+                    ]}
+                  />
+                )
+              }
+            >
+              <div
+                className="inventory-turnover-chart-scroll"
+                tabIndex={0}
+                role="region"
+                aria-label={`${title}，可横向滚动`}
+              >
+                <ReportChart
+                  sample={false}
+                  summary={data.turnover
+                    .filter((row) => !row.label.endsWith("YTD"))
+                    .map(
+                      (row) =>
+                        `${row.dimensions.scope} ${row.label}：${format(row.values[field], 1)}天`,
+                    )
+                    .join("；")}
+                  option={turnoverOption(data.turnover, field, sharedMax)}
+                />
+              </div>
             </Card>
           ))}
         </div>
-        <InventoryTable
-          title="周转明细与1—9月累计"
-          rows={data.turnover.map((row) => ({
-            ...row,
-            label: `${row.dimensions.scope} / ${row.label}`,
-          }))}
-          fields={["days_qty", "days_purchase", "days_amount"]}
-        />
+        {overview && <InventoryTurnoverDetails data={data} overview />}
       </section>
       <section className="inventory-section">
-        <h2 className="inventory-section-title">
-          <b>4</b>未来库存趋势
-        </h2>
+        {overview && (
+          <h2 className="inventory-section-title">
+            <b>4</b>未来库存趋势
+          </h2>
+        )}
         <Card
-          title="无新增补货下的库存支持天数"
+          title="未来库存可支持天数趋势"
           size="small"
           className="inventory-future-panel"
-          extra={
-            <>
-              <Segmented
-                aria-label="预测库存范围"
-                value={scope}
-                onChange={setScope}
-                options={["所有仓库", "FBA+海外仓"]}
-              />
-              <Segmented
-                aria-label="库存需求情景"
-                value={scenario}
-                onChange={setScenario}
-                options={["需求+15%", "基础", "需求-15%"]}
-              />
-            </>
-          }
         >
+          {data.future.length ? (
+            <>
+              <div className="inventory-future-alerts">
+                {["所有仓库", "FBA+海外仓"].map((scope) => (
+                  <div key={scope}>
+                    <strong>{scope}</strong>
+                    {["需求+15%", "基础", "需求-15%"].map((scenario) => {
+                      const rows = data.future.filter(
+                        (row) =>
+                          row.scope === scope && row.scenario === scenario,
+                      );
+                      const shortage = rows.find(
+                        (row) =>
+                          row.support_days !== null &&
+                          Number(row.support_days) < row.calendar_days,
+                      );
+                      const missing = rows.some(
+                        (row) => row.support_days === null,
+                      );
+                      return (
+                        <span key={scenario}>
+                          {scenario}：
+                          {missing
+                            ? "预测数据缺失"
+                            : shortage
+                              ? `${shortage.month}可覆盖${format(shortage.support_days, 1)}天`
+                              : "有效预测窗口内尚未耗尽"}
+                        </span>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+              {["所有仓库", "FBA+海外仓"].map((scope) => (
+                <div key={scope} className="inventory-holding-chart">
+                  <h3>{scope}可覆盖天数 · 实色为基准，浅色为±15%区间</h3>
+                  <ReportChart
+                    sample={false}
+                    option={holdingOption(
+                      data.future,
+                      scope,
+                      scope === "所有仓库"
+                        ? token.colorInfo
+                        : token.colorPrimary,
+                    )}
+                    summary={data.future
+                      .filter((row) => row.scope === scope)
+                      .map(
+                        (row) =>
+                          `${row.month} ${row.scenario}：${format(row.support_days, 1)}天，月末余${format(row.remaining, 0)}件`,
+                      )
+                      .join("；")}
+                  />
+                </div>
+              ))}
+            </>
+          ) : (
+            <Empty description="当前筛选无有效未来销量预测" />
+          )}
           <p className="sample-note">
-            起点：经营工作簿9月末库存；需求：现有MSKU月销量预估结果。窗口按最后一个正需求月份结束，不假定未来补货。
+            面积覆盖：按月初剩余库存折算当月可覆盖天数；误差区间±15%；不计未来新增补货。
           </p>
-          <ReportChart
-            sample={false}
-            summary={future
-              .map(
-                (row) =>
-                  `${row.month}需求${format(row.demand, 0)}件，可覆盖${format(row.support_days, 1)}天，月末剩余${format(row.remaining, 0)}件`,
-              )
-              .join("；")}
-            option={{
-              tooltip: { trigger: "axis" },
-              legend: { data: ["可覆盖天数", "自然天数"] },
-              grid: { left: 55, right: 20, top: 45, bottom: 40 },
-              xAxis: { type: "category", data: future.map((row) => row.month) },
-              yAxis: { type: "value", name: "天" },
-              series: [
-                {
-                  name: "可覆盖天数",
-                  type: "line",
-                  data: future.map((row) =>
-                    row.support_days === null ? null : Number(row.support_days),
-                  ),
-                },
-                {
-                  name: "自然天数",
-                  type: "line",
-                  lineStyle: { type: "dashed" },
-                  data: future.map((row) => row.calendar_days),
-                },
-              ],
-            }}
-          />
-          <Table<FutureRow>
-            rowKey="month"
-            dataSource={future}
-            size="small"
-            pagination={false}
-            scroll={{ x: 650 }}
-            columns={[
-              { title: "月份", dataIndex: "month" },
-              {
-                title: "预测需求（件）",
-                align: "right",
-                render: (_, row) => format(row.demand, 0),
-              },
-              {
-                title: "可覆盖（天）",
-                align: "right",
-                render: (_, row) => format(row.support_days, 1),
-              },
-              {
-                title: "月末剩余（件）",
-                align: "right",
-                render: (_, row) => format(row.remaining, 0),
-              },
-            ]}
-          />
         </Card>
       </section>
     </>

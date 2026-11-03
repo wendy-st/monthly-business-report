@@ -1,0 +1,142 @@
+.product-cost-block {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--report-color-cost-divider);
+  font-size: 12px;
+}
+.product-cost-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+}
+.product-rate-bridge {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: var(--seekway-color-bg-layout);
+}
+.product-trend-row {
+  display: grid;
+  grid-template-columns: 58px minmax(40px, 1fr) minmax(75px, auto);
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.product-trend-row > strong {
+  text-align: right;
+  font-size: 11px;
+}
+.product-trend-track {
+  position: relative;
+  display: block;
+  height: 9px;
+  background: var(--report-color-rank-track);
+}
+.product-trend-track em {
+  position: absolute;
+  height: 13px;
+  top: -2px;
+  border-left: 1px solid var(--seekway-color-text-secondary);
+}
+.product-trend-track i {
+  position: absolute;
+  height: 100%;
+  background: var(--seekway-color-primary);
+}
+.period-previous i {
+  opacity: 0.65;
+}
+.period-year_ago i {
+  opacity: 0.35;
+}
+.product-trend-changes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 10px;
+}
+.product-trend-changes small,
+.product-diagnosis small {
+  display: block;
+  color: var(--seekway-color-text-secondary);
+  font-size: 10px;
+}
+.product-cost-conclusion {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-left: 4px solid var(--seekway-color-warning);
+  background: var(--seekway-color-warning-bg);
+  font-size: 12px;
+  line-height: 1.75;
+}
+.product-cost-conclusion p {
+  margin: 5px 0 0;
+}
+.category-details {
+  min-width: 0;
+  border: 1px solid var(--seekway-color-border);
+  border-radius: 6px;
+  background: var(--seekway-color-bg-container);
+}
+.product-detail-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+.product-detail-toolbar > span {
+  white-space: nowrap;
+}
+.product-detail-table {
+  font-size: 11px;
+}
+.product-detail-table .positive {
+  color: var(--report-color-positive);
+  font-weight: 700;
+}
+.product-detail-table .negative {
+  color: var(--report-color-negative);
+  font-weight: 700;
+}
+.diagnosis-warning {
+  color: var(--seekway-color-warning);
+}
+.product-diagnosis {
+  line-height: 1.6;
+}
+.product-refund-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.product-refund-note,
+.product-refund-summary,
+.product-refund-detail-note {
+  margin: 8px 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.product-refund-note,
+.product-refund-detail-note,
+.product-sample-insufficient {
+  color: var(--seekway-color-text-secondary);
+}
+.product-refund-detail-note {
+  padding: 0 12px;
+}
+.product-refunds .negative {
+  color: var(--report-color-negative);
+  font-weight: 700;
+}
+.product-matrix-note {
+  font-size: 12px;
+  color: var(--seekway-color-text-secondary);
+}
+.product-page .product-matrix-ranked .report-table-scroll {
+  max-height: 352px;
+}
+.product-page .product-matrix-ranked :is(th, td) {
+  height: 32px;
+}

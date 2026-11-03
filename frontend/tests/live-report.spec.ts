@@ -10,7 +10,7 @@ const number = (value: string, scale = 1) =>
     maximumFractionDigits: 2,
   });
 
-test("默认真实报告与API一致，五模块、历史和来源可用", async ({
+test("默认真实报告与API一致，七个入口、年度分组和来源可用", async ({
   page,
   request,
 }, info) => {
@@ -22,6 +22,16 @@ test("默认真实报告与API一致，五模块、历史和来源可用", async
   await page.goto("/");
   await expect(page.getByText(/9月真实数据/)).toBeVisible();
   await expect(page.getByText("界面样例／合成数据")).toHaveCount(0);
+  await expect(page.locator(".report-nav-main")).toHaveText([
+    "经营总览",
+    "月度经营分析",
+    "年度经营分析",
+    "品类经营分析",
+    "库存周转",
+    "ITK大盘数据分析",
+    "LISTING分析问题清单",
+  ]);
+  await expect(page.locator(".report-nav-icon svg")).toHaveCount(7);
   await expect(page.locator(".metric-value").nth(1)).toHaveText(
     `${number(financial.summary.current.revenue, 10000)}万总计`,
     { timeout: 30_000 },
@@ -39,23 +49,48 @@ test("默认真实报告与API一致，五模块、历史和来源可用", async
   };
   await screenshot("live-overview");
   await page
-    .getByRole("menuitem", { name: "2. 业务组经营分析", exact: true })
+    .getByRole("menuitem", { name: "月度经营分析", exact: true })
     .click();
-  await page.getByRole("menuitem", { name: "2.2 HCM", exact: true }).click();
+  await page.getByRole("menuitem", { name: "HCM", exact: true }).click();
   await expect(page.locator(".metric-value").first()).toBeVisible({
     timeout: 30_000,
   });
   await screenshot("live-business");
-  await page.getByText("近6年LISTING盈收趋势", { exact: true }).click();
   await expect(
-    page.getByText("历史最佳月与当前差距", { exact: true }),
-  ).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole("combobox", { name: "历史年份" })).toBeVisible();
+    page.getByText("近6年LISTING盈收趋势", { exact: true }),
+  ).toHaveCount(0);
   await page
-    .getByRole("menuitem", { name: "3. 产品经营分析", exact: true })
+    .getByRole("menuitem", { name: "年度经营分析", exact: true })
     .click();
   await expect(
-    page.getByText("款式盈利与成本明细", { exact: true }),
+    page.getByRole("heading", { name: /逐LISTING历史最佳月与/ }),
+  ).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("group", { name: "历史年份" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "HCM组近6年LISTING盈收管理看板",
+      exact: true,
+    }),
+  ).toBeVisible();
+  const historyResponse = page.waitForResponse(
+    (response) =>
+      response.url().includes("/history?group=LZF") && response.ok(),
+  );
+  await page.getByRole("menuitem", { name: "LZF", exact: true }).click();
+  const history = await (await historyResponse).json();
+  await expect(page.locator(".annual-page figcaption").first()).toContainText(
+    `${(Number(history.annual[0].current.revenue) / 10000).toFixed(2)}万`,
+  );
+  await expect(page.locator(".business-page")).toHaveCount(0);
+  await expect(
+    page.getByRole("menuitem", { name: "年度经营分析", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
+  await screenshot("live-annual");
+  await page
+    .getByRole("menuitem", { name: "品类经营分析", exact: true })
+    .click();
+  await expect(
+    page.getByText("三、款式盈利 & 成本诊断明细", { exact: true }),
   ).toBeVisible({ timeout: 30_000 });
   await screenshot("live-products");
   await page
@@ -79,11 +114,9 @@ test("默认真实报告与API一致，五模块、历史和来源可用", async
   await expect(
     page.getByRole("searchbox", { name: "搜索LISTING或款式", exact: true }),
   ).toHaveValue("");
-  await page
-    .getByRole("menuitem", { name: "4. 库存周转", exact: true })
-    .click();
+  await page.getByRole("menuitem", { name: "库存周转", exact: true }).click();
   await expect(
-    page.getByText("LISTING周转健康与季节性风险", { exact: true }),
+    page.getByText("FBA库龄占比（按小组）", { exact: true }),
   ).toBeVisible({ timeout: 90_000 });
   await screenshot("live-inventory");
   await page.getByText("含头程", { exact: true }).click();
@@ -91,14 +124,18 @@ test("默认真实报告与API一致，五模块、历史和来源可用", async
     page.getByRole("radio", { name: "含头程", exact: true }),
   ).toBeChecked();
   await page
-    .getByRole("menuitem", { name: "5. LISTING业务分析报告", exact: true })
+    .getByRole("menuitem", { name: "LISTING分析问题清单", exact: true })
     .click();
+  await page.getByRole("menuitem", { name: "HCM", exact: true }).click();
   await expect(page.locator(".listing-report").first()).toBeVisible({
     timeout: 30_000,
   });
   await screenshot("live-listing");
-  await expect(page.getByText(/MX经营简版/).first()).toBeVisible();
-  await expect(page.getByText(/上新 \/ 推广集中关注/).first()).toBeVisible();
+  await expect(page.locator(".listing-issues").first()).toBeVisible();
+  for (const site of ["MX", "FR", "ES", "IT"])
+    await expect(
+      page.getByRole("region", { name: `${site}站点报告`, exact: true }),
+    ).toHaveCount(0);
   await page
     .getByRole("button", { name: "数据来源与导入状态", exact: true })
     .click();
@@ -111,15 +148,16 @@ test("默认真实报告与API一致，五模块、历史和来源可用", async
 });
 
 for (const width of [1024, 1280, 1440, 1920]) {
-  test(`真实数据${width}宽度五模块无整页横向溢出`, async ({ page }) => {
+  test(`真实数据${width}宽度六模块无整页横向溢出`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
     for (const [menu, ready] of [
-      ["1. 经营总览", ".conclusion-card"],
-      ["2. 业务组经营分析", ".metric-value"],
-      ["3. 产品经营分析", ".product-page .product-groups"],
-      ["4. 库存周转", ".inventory-conclusion"],
-      ["5. LISTING业务分析报告", ".listing-report"],
+      ["经营总览", ".conclusion-card"],
+      ["月度经营分析", ".metric-value"],
+      ["年度经营分析", ".annual-page .history-chart-grid canvas"],
+      ["品类经营分析", ".product-page .product-groups"],
+      ["库存周转", ".inventory-conclusion"],
+      ["LISTING分析问题清单", ".listing-report"],
     ]) {
       await page.getByRole("menuitem", { name: menu, exact: true }).click();
       await expect(page.locator(ready).first()).toBeVisible({

@@ -1,0 +1,231 @@
+.itk-dashboard button,
+.itk-dashboard input,
+.itk-dashboard select,
+.itk-button {
+  font: inherit;
+}
+.itk-dashboard button,
+.itk-button {
+  border: 1px solid var(--itk-input-border);
+  background: var(--itk-surface);
+  color: var(--itk-ink);
+  border-radius: 7px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 34px;
+}
+.itk-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  white-space: normal;
+  min-width: 0;
+  max-width: 100%;
+  text-align: center;
+}
+.itk-dashboard button:hover,
+.itk-button:hover {
+  background: var(--itk-target);
+  color: var(--itk-ink);
+}
+.itk-dashboard button:disabled,
+.itk-button[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: default;
+}
+.itk-dashboard .itk-primary,
+.itk-focus-brands button.active {
+  background: var(--itk-ink);
+  color: var(--itk-surface);
+  border-color: var(--itk-ink);
+}
+.itk-dashboard :focus-visible {
+  outline: 3px solid var(--itk-focus);
+  outline-offset: 3px;
+}
+.itk-dashboard input:not([type="checkbox"]):not([role="combobox"]),
+.itk-dashboard select {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--itk-input-border);
+  background: var(--itk-surface);
+  color: var(--itk-ink);
+  border-radius: 6px;
+  padding: 8px 10px;
+  height: 38px;
+}
+.itk-dashboard input[type="checkbox"] {
+  accent-color: var(--itk-accent);
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.itk-field {
+  display: block;
+  min-width: 0;
+}
+.itk-field > span,
+.itk-peer-toolbar label,
+.itk-table-actions label {
+  display: block;
+  font-size: 12px;
+  color: var(--itk-muted);
+}
+.itk-field > span {
+  margin-bottom: 6px;
+}
+.itk-focus-brands {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.itk-focus-brands button {
+  font-size: 12px;
+}
+.itk-compare-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.8fr 2.5fr 1.2fr;
+  gap: 16px;
+  padding: 18px 22px;
+  align-items: end;
+  background: var(--itk-surface);
+  border: 1px solid var(--itk-line);
+  border-radius: 10px;
+}
+.itk-manual {
+  height: 38px;
+}
+.itk-peers {
+  padding: 16px 20px;
+  margin-bottom: 18px;
+  scroll-margin-top: calc(
+    var(--report-header-height, 114px) + var(--itk-sticky-height, 190px) + 12px
+  );
+}
+.itk-peers summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.itk-peers summary > span {
+  font-weight: 400;
+  color: var(--itk-muted);
+  margin-left: 12px;
+}
+.itk-peer-toolbar {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.itk-peer-toolbar label {
+  flex: 1;
+  min-width: 160px;
+}
+.itk-peer-toolbar button {
+  font-size: 12px;
+  padding: 8px 10px;
+}
+.itk-peer-choices {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px 18px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding: 5px;
+}
+.itk-peer-choices label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 12px;
+  min-height: 28px;
+  cursor: pointer;
+}
+.itk-peer-choices span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.itk-peer-choices small {
+  color: var(--itk-muted);
+  margin-left: auto;
+  white-space: nowrap;
+}
+.itk-overview-filters {
+  display: grid;
+  grid-template-columns: 1.05fr 1.05fr 0.85fr 1fr 1fr 1.25fr auto;
+  gap: 14px;
+  align-items: end;
+  padding: 19px 22px;
+  background: var(--itk-surface);
+  border: 1px solid var(--itk-line);
+  border-radius: 10px;
+}
+.itk-overview-filters button {
+  height: 38px;
+}
+.itk-table-actions {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+}
+.itk-table-actions label {
+  width: 230px;
+  max-width: 100%;
+}
+.itk-pagination {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  color: var(--itk-muted);
+  font-size: 12px;
+}
+.itk-pagination > div {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+@media (max-width: 1510px) {
+  .itk-overview-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  }
+  .itk-overview-filters .itk-field:nth-child(4) {
+    grid-column: 1;
+  }
+}
+@media (max-width: 1230px) {
+  .itk-compare-filters {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .itk-compare-filters .itk-field:nth-child(4) {
+    grid-column: span 2;
+  }
+  .itk-peer-choices {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 1000px) {
+  .itk-table-actions {
+    flex-wrap: wrap;
+  }
+  .itk-overview-filters,
+  .itk-compare-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .itk-overview-filters .itk-field:nth-child(4) {
+    grid-column: auto;
+  }
+  .itk-compare-filters .itk-field:nth-child(4),
+  .itk-manual {
+    grid-column: span 2;
+  }
+  .itk-peer-choices {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

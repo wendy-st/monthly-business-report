@@ -1,4 +1,5 @@
 import type { OverviewDetails } from "./overview-contracts";
+import type { ProductAnalysis } from "./product-contracts";
 
 export type Amounts = Record<string, string | null>;
 export type MetricRow = {
@@ -21,6 +22,7 @@ export type Step = {
   kind: "total" | "change";
 };
 export type FinancialView = {
+  product?: ProductAnalysis;
   overview?: OverviewDetails;
   summary: MetricRow;
   series: MetricRow[];
@@ -91,11 +93,36 @@ export type InventoryView = {
   future: FutureRow[];
   warnings: string[];
   source_note: string;
-  seasonal: { key: string; label: string; risk: SeasonalRisk }[];
+  seasonal: InventoryRisk[];
+  seasonal_styles: InventoryRisk[];
+  seasonal_group: InventoryRisk | null;
+  kpis: {
+    label: string;
+    unit: string;
+    current: string | null;
+    previous: string | null;
+    year_ago: string | null;
+    mom: string | null;
+    yoy: string | null;
+  }[];
+  conclusions: string[];
+  options: Record<string, string[]>;
+};
+export type InventoryRisk = {
+  key: string;
+  label: string;
+  risk: SeasonalRisk;
+  dimensions: Record<string, string>;
+  values: Amounts;
+  exhaustion: string;
+  conclusions: string[];
+  core_conclusion: string;
+  skus: InventoryRow[];
 };
 export type SeasonalRisk = {
   phase: string;
   peak_month: string;
+  season_start: string;
   season_end: string;
   health: string;
   score: number;
@@ -105,6 +132,10 @@ export type SeasonalRisk = {
   window_end_remaining_rate: string | null;
 };
 export type HistoryView = {
+  year_basis: "calendar" | "fiscal";
+  period_scope: "full" | "h1" | "h2";
+  year_labels: Record<string, string>;
+  month_order: number[];
   annual: MetricRow[];
   quarterly: MetricRow[];
   monthly: MetricRow[];
@@ -114,6 +145,18 @@ export type HistoryView = {
   source_note: string;
   excluded: MetricRow[];
   options: Record<string, string[]>;
+  summary: MetricRow;
+  period_label: string;
+  previous_period_label: string;
+  anchor_year: string;
+  max_month: number;
+  period_start: string;
+  period_end: string;
+  source_file: string;
+  source_sheet: string;
+  cost_trends: MetricRow[];
+  quadrant: Record<string, string | null>;
+  insights: Record<string, MetricRow | null>;
 };
 export type SourceStatus = {
   report_month: string;

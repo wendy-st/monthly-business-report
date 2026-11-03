@@ -4,7 +4,7 @@
 .product-page .product-filters {
   padding: 10px 12px;
   border-radius: 0;
-  height: 71px;
+  height: auto;
 }
 .product-head h2 {
   line-height: 1.25;
@@ -17,12 +17,8 @@
   font-weight: 400;
   margin-top: 3px;
 }
-.product-page > .three-col-grid > .report-panel {
-  height: 442.75px;
-  overflow: auto;
-}
 .product-page .product-matrix {
-  font-size: 11px;
+  font-size: 12px;
 }
 .product-matrix th,
 .product-matrix td {
@@ -59,7 +55,7 @@
   display: none;
 }
 .product-page .ranking-list li > div > span {
-  font-size: 9px;
+  font-size: 12px;
 }
 .loss-track {
   height: 8px;
@@ -89,14 +85,14 @@
   grid-template-columns: 75px 1fr 55px;
   gap: 8px;
   align-items: center;
-  font-size: 11px;
+  font-size: 12px;
   min-height: 26px;
 }
 .cost-rate-row .share-track {
   width: 100%;
 }
 .sample-note {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--seekway-color-text-secondary);
   line-height: 1.7;
 }
@@ -111,7 +107,7 @@
   font-size: 24px;
 }
 .product-head > span {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--report-color-grain);
   white-space: nowrap;
   padding-top: 10px;
@@ -131,7 +127,7 @@
 }
 .product-filters .filter-field {
   gap: 4px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
 }
 .product-reset {
@@ -144,7 +140,7 @@
 }
 .product-groups {
   margin-top: 10px;
-  height: 30px;
+  min-height: 30px;
 }
 .product-page > .section-heading {
   display: flex;
@@ -173,7 +169,7 @@
   content: "3";
 }
 .product-page .three-col-grid {
-  grid-template-columns: 1.05fr 1.15fr 0.9fr;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.15fr) minmax(0, 0.9fr);
   gap: 12px;
 }
 .product-page .report-panel {
@@ -184,8 +180,39 @@
 .product-page .report-panel-heading {
   font-size: 14px;
 }
-.product-page > .three-col-grid > .report-panel {
-  min-height: 442.75px;
+.product-page > .three-col-grid > * {
+  max-height: 442.75px;
+  overflow: auto;
+}
+.product-page > .three-col-grid > :nth-child(n + 2) {
+  height: 442.75px;
+}
+.product-page .category-card-heading {
+  min-height: auto;
+  padding: 14px 16px 0;
+  border-bottom: 0;
+  font-size: 14px;
+}
+.product-page .category-card-body {
+  padding: 14px 16px;
+}
+.product-page .cost-matrix-card .report-table-scroll {
+  max-height: 520px;
+  overflow: auto;
+}
+.product-page .cost-matrix-card th {
+  position: sticky;
+  top: 0;
+  background: var(--seekway-color-bg-layout);
+}
+.product-page .product-matrix th,
+.product-page .product-matrix td {
+  text-align: right;
+  white-space: nowrap;
+}
+.product-page .product-matrix th:first-child,
+.product-page .product-matrix td:first-child {
+  text-align: left;
 }
 .product-page .chart-canvas {
   height: 220px;
@@ -204,10 +231,10 @@
   align-items: center;
 }
 .product-page .ranking-list li > div {
-  font-size: 11px;
+  font-size: 12px;
 }
 .product-page .ranking-list li > span {
-  font-size: 11px;
+  font-size: 12px;
   text-align: right;
 }
 @media (max-width: 1350px) {
@@ -224,6 +251,7 @@
   }
   .product-page .three-col-grid > :last-child {
     grid-column: 1 / -1;
+    height: auto;
   }
   .product-head > span {
     display: none;
@@ -248,4 +276,16 @@
 }
 .product-page .ranking-list li > span:last-child {
   white-space: nowrap;
+}
+
+.product-page .category-details td button {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-page .product-filters {
+  padding: 8px 12px;
 }

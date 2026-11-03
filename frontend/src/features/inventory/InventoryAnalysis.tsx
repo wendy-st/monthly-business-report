@@ -17,16 +17,37 @@ export function InventoryAnalysis() {
   const overview = group === "库存总览";
   return (
     <div className="section-stack inventory-page">
-      <ReportTabs
-        label="库存分组"
-        value={group}
-        onChange={setGroup}
-        options={["库存总览", ...groupNames].map((value) => ({
-          value,
-          label: value,
-        }))}
-      />
-      {overview ? (
+      <div className="sticky-filter-bar inventory-filter-bar">
+        <ReportTabs
+          label="库存分组"
+          value={group}
+          onChange={setGroup}
+          options={["库存总览", ...groupNames].map((value) => ({
+            value,
+            label: value,
+          }))}
+        />
+        {!overview && (
+          <div className="inventory-group-toolbar">
+            <Space wrap>
+              <Select
+                aria-label="小组库存站点"
+                value={site}
+                onChange={setSite}
+                options={["全部站点", "US", "CA"].map((value) => ({
+                  value,
+                  label: value,
+                }))}
+                style={{ width: 140 }}
+              />
+              <span className="sample-note">
+                {group} · 合成库存总量；站点库存尚未关联，暂不按站点拆分。
+              </span>
+            </Space>
+          </div>
+        )}
+      </div>
+      {overview && (
         <>
           <h2 className="inventory-section-title">
             <b>1</b>库存总览
@@ -49,24 +70,6 @@ export function InventoryAnalysis() {
             </div>
           </Card>
         </>
-      ) : (
-        <div className="inventory-group-toolbar">
-          <Space wrap>
-            <Select
-              aria-label="小组库存站点"
-              value={site}
-              onChange={setSite}
-              options={["全部站点", "US", "CA"].map((value) => ({
-                value,
-                label: value,
-              }))}
-              style={{ width: 140 }}
-            />
-            <span className="sample-note">
-              {group} · 合成库存总量；站点库存尚未关联，暂不按站点拆分。
-            </span>
-          </Space>
-        </div>
       )}
       <section className="inventory-section">
         <h2 className="inventory-section-title">

@@ -22,6 +22,7 @@ export function FinancialPage({
   const [filters, setFilters] = useState<Filters>({ group });
   const [comparison, setComparison] = useState("mom");
   const [basis, setBasis] = useState("actual");
+  const [refundMinSales, setRefundMinSales] = useState(100);
   const selection = {
     comparison,
     basis,
@@ -40,22 +41,40 @@ export function FinancialPage({
       className={`section-stack ${kind === "overview" ? "overview-page" : "product-page"}`}
     >
       {product && (
-        <div className="product-head">
-          <div>
-            <h2 className="section-heading">3. 产品经营分析</h2>
-            <span>按小组、站点、LISTING与款式诊断盈利、成本和退款影响。</span>
-          </div>
-          <span>粒度包含完整三级品类路径</span>
+        <div className="sticky-filter-bar">
+          {product && (
+            <div className="product-head">
+              <div>
+                <h2 className="section-heading">3. 品类经营分析</h2>
+                <span>
+                  按小组、站点、LISTING与款式诊断盈利、成本和退款影响。
+                </span>
+              </div>
+              <span>粒度包含完整三级品类路径</span>
+            </div>
+          )}
+          <FinancialFilters
+            filters={filters}
+            options={data?.options ?? {}}
+            product={product}
+            fixedGroup={false}
+            onChange={setFilters}
+          />
+          {data && (
+            <div className="product-groups">
+              {["", ...data.options.group].map((name) => (
+                <Button
+                  key={name}
+                  size="small"
+                  type={(filters.group || "") === name ? "primary" : "default"}
+                  onClick={() => setFilters({ group: name })}
+                >
+                  {name || "全部小组"}
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
-      )}
-      {kind !== "overview" && (
-        <FinancialFilters
-          filters={filters}
-          options={data?.options ?? {}}
-          product={product}
-          fixedGroup={false}
-          onChange={setFilters}
-        />
       )}
       <>
         {request.error && (
@@ -97,22 +116,6 @@ export function FinancialPage({
                 </ul>
               </Card>
             )}
-            {product && (
-              <div className="product-groups">
-                {["", ...data.options.group].map((name) => (
-                  <Button
-                    key={name}
-                    size="small"
-                    type={
-                      (filters.group || "") === name ? "primary" : "default"
-                    }
-                    onClick={() => setFilters({ group: name })}
-                  >
-                    {name || "全部小组"}
-                  </Button>
-                ))}
-              </div>
-            )}
             {!product && (
               <MetricCards
                 metrics={metrics(data.summary)}
@@ -137,7 +140,7 @@ export function FinancialPage({
                     }
                   />
                 )}
-                {costs.error && (
+                {!product && costs.error && (
                   <Alert
                     type="error"
                     title={costs.error}
@@ -145,7 +148,12 @@ export function FinancialPage({
                   />
                 )}
                 {product ? (
-                  <ProductDashboard data={data} costs={costs.data} />
+                  <ProductDashboard
+                    data={data}
+                    filters={filters}
+                    minSales={refundMinSales}
+                    onMinSalesChange={setRefundMinSales}
+                  />
                 ) : kind === "overview" && data.overview ? (
                   <>
                     <OverviewBreakdowns data={data.overview} />

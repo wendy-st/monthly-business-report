@@ -1,4 +1,7 @@
 .report-nav-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: 100%;
   border: 0;
   border-radius: 8px;
@@ -10,6 +13,10 @@
   cursor: pointer;
   font-size: 14px;
   line-height: normal;
+}
+.report-nav-icon {
+  flex-shrink: 0;
+  font-size: 16px;
 }
 .report-nav-main.active {
   background: var(--seekway-color-primary);

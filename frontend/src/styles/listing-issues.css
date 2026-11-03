@@ -1,0 +1,40 @@
+.listing-issue-report .listing-identity {
+  font-size: 12px;
+}
+.listing-issue-report .listing-identity h3 {
+  font-size: 18px;
+}
+.listing-issues {
+  min-width: 0;
+  margin: 0;
+  padding: var(--section-gap) var(--section-gap) var(--section-gap)
+    calc(var(--section-gap) * 3);
+  font-size: 14px;
+}
+.listing-issues li {
+  padding: var(--field-gap) 0;
+  overflow-wrap: anywhere;
+}
+.listing-issues li + li {
+  border-top: 1px solid var(--seekway-color-border-secondary);
+}
+.listing-issue-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--field-gap);
+}
+.listing-issues p {
+  margin: var(--field-gap) 0 0;
+  line-height: 1.7;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 1279px) {
+  .listing-page .listing-issue-report {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .listing-issue-report .listing-identity {
+    border-right: 0;
+    border-bottom: 1px solid var(--seekway-color-border-secondary);
+  }
+}

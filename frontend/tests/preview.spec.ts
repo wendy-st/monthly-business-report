@@ -12,20 +12,15 @@ test("样例明确标记，产品搜索与文件选择路径可操作", async ({
       exact: true,
     }),
   ).toBeVisible();
-  await page.getByRole("menuitem", { name: /3\. 产品经营分析/ }).click();
+  await page.getByRole("menuitem", { name: "品类经营分析" }).click();
   await page.getByRole("button", { name: "LZF组", exact: true }).click();
   await page.getByRole("textbox", { name: "搜索款式" }).fill("DEMO-D");
   await expect(page.getByText("1 款", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "查看", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
-  await page
-    .getByRole("dialog")
-    .getByText("剔价剔退款", { exact: true })
-    .click();
-  await expect(
-    page.getByRole("radio", { name: "剔价剔退款", exact: true }),
-  ).toBeChecked();
-  await expect(page.getByText(/当前查看：剔价剔退款/)).toBeVisible();
+  await expect(page.getByText("LISTING 历史验证", { exact: true })).toHaveCount(
+    0,
+  );
   await page
     .getByRole("dialog")
     .getByRole("button", { name: "关闭", exact: true })
@@ -67,11 +62,12 @@ for (const [width, height] of [
       }),
     ).toBeVisible();
     for (const name of [
-      /1\. 经营总览/,
-      /2\. 业务组经营分析/,
-      /3\. 产品经营分析/,
-      /4\. 库存周转/,
-      /5\. LISTING业务分析报告/,
+      "经营总览",
+      "月度经营分析",
+      "年度经营分析",
+      "品类经营分析",
+      "库存周转",
+      "LISTING分析问题清单",
     ]) {
       await page.getByRole("menuitem", { name }).click();
       await expect(page.getByText("界面样例／合成数据")).toBeVisible();
@@ -88,19 +84,21 @@ test("业务分组、历史粒度、库存口径与LISTING导航对应当前对�
   page,
 }) => {
   await page.goto("/?preview=1");
-  await page.getByRole("menuitem", { name: /2\. 业务组经营分析/ }).click();
-  await page.getByRole("menuitem", { name: "2.2 HCM组", exact: true }).click();
+  await page.getByRole("menuitem", { name: "月度经营分析" }).click();
+  await page.getByRole("menuitem", { name: "HCM组", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "HCM组经营表现" }),
   ).toBeVisible();
-  await page.getByRole("tab", { name: "近6年LISTING盈收趋势" }).click();
+  await page
+    .getByRole("menuitem", { name: "年度经营分析", exact: true })
+    .click();
   await expect(
     page.getByText("2. 季度趋势（最近12个季度）", { exact: true }),
   ).toBeVisible();
   const year = page.getByRole("checkbox", { name: "2021", exact: true });
   await year.uncheck();
   await expect(year).not.toBeChecked();
-  await page.getByRole("menuitem", { name: /4\. 库存周转/ }).click();
+  await page.getByRole("menuitem", { name: "库存周转" }).click();
   await page.getByRole("tab", { name: "Ash组", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Ash组小组库存规模结构" }),
@@ -110,12 +108,10 @@ test("业务分组、历史粒度、库存口径与LISTING导航对应当前对�
     page.getByRole("radio", { name: "含头程", exact: true }),
   ).toBeChecked();
   await expect(page.getByText(/库存资金17.92万元/)).toBeVisible();
-  await page.getByRole("menuitem", { name: /5\. LISTING业务分析报告/ }).click();
-  await page
-    .getByRole("menuitem", { name: "5.3 Ash组LISTING分析报告", exact: true })
-    .click();
+  await page.getByRole("menuitem", { name: "LISTING分析问题清单" }).click();
+  await page.getByRole("menuitem", { name: "Ash组", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "5.3 Ash组LISTING分析报告" }),
+    page.getByRole("heading", { name: "Ash组 · LISTING分析问题清单" }),
   ).toBeVisible();
   await expect(page.getByRole("region", { name: "US站点报告" })).toBeVisible();
   await expect(page.getByRole("region", { name: "CA站点报告" })).toBeVisible();
@@ -139,7 +135,7 @@ test("侧栏工具可用键盘打开说明并返回焦点，页头滚动后仍�
   ).toBeGreaterThanOrEqual(0);
 });
 
-test("原报告1440×1000布局基准：五模块关键区块的位置和尺寸", async ({
+test("原报告1440×1000布局基准：月度移除页签后保留其余区块尺寸", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -172,12 +168,13 @@ test("原报告1440×1000布局基准：五模块关键区块的位置和尺寸"
     height: 424.39,
   });
   await page
-    .getByRole("menuitem", { name: "2. 业务组经营分析", exact: true })
+    .getByRole("menuitem", { name: "月度经营分析", exact: true })
     .click();
-  await rect(".business-filters", { y: 188.59, height: 56 });
-  await rect(".business-kpi-panel", { y: 258.59, height: 219.39 });
+  // 年度入口已移至侧栏，原页签占用的61px不再保留。
+  await rect(".business-filters", { y: 127.59, height: 56 });
+  await rect(".business-kpi-panel", { y: 197.59, height: 219.39 });
   await page
-    .getByRole("menuitem", { name: "3. 产品经营分析", exact: true })
+    .getByRole("menuitem", { name: "品类经营分析", exact: true })
     .click();
   await rect(".product-filters", { y: 195.59, height: 71 });
   await rect(".product-page > .three-col-grid", { y: 373.59, height: 442.75 });
@@ -188,14 +185,12 @@ test("原报告1440×1000布局基准：五模块关键区块的位置和尺寸"
         (el) => getComputedStyle(el).gridTemplateColumns.split(" ").length,
       ),
   ).toBe(10);
-  await page
-    .getByRole("menuitem", { name: "4. 库存周转", exact: true })
-    .click();
+  await page.getByRole("menuitem", { name: "库存周转", exact: true }).click();
   await rect(".inventory-page .metric-grid", { y: 228.59, height: 139 });
   await rect(".inventory-conclusion", { y: 381.59, height: 203.67 });
   await rect(".warehouse-panel", { y: 664.27, height: 149.39 });
   await page
-    .getByRole("menuitem", { name: "5. LISTING业务分析报告", exact: true })
+    .getByRole("menuitem", { name: "LISTING分析问题清单", exact: true })
     .click();
   await rect(".listing-group-summary", { y: 214.59, height: 148 });
   await rect(".listing-report", { y: 418.59, width: 1156 });

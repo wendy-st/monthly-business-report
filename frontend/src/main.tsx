@@ -9,7 +9,9 @@ import "./styles/app.css";
 import "./styles/report-layout.css";
 import "./styles/report-details.css";
 import "./styles/product-layout.css";
+import "./styles/product-details.css";
 import "./styles/inventory-layout.css";
+import "./styles/inventory-current.css";
 import "./styles/report-navigation.css";
 import "./styles/live-report.css";
 import "./styles/overview-analysis.css";
@@ -17,6 +19,8 @@ import "./styles/overview-breakdowns.css";
 import "./styles/business-current.css";
 import "./styles/business-tables.css";
 import "./styles/business-analysis.css";
+import "./styles/history-dashboard.css";
+import "./styles/sticky-filters.css";
 
 // 已验收的合成布局仅供开发回归；正式构建不暴露样例入口。
 const PreviewApp = import.meta.env.DEV

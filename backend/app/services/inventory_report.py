@@ -2,165 +2,39 @@
 
 from __future__ import annotations
 
-import calendar
-from collections import defaultdict
 from decimal import Decimal
 
-from pydantic import BaseModel
-
+from app.schemas.inventory import InventoryView
 from app.schemas.reports import ReportFilter
-from app.services.financial_model import Amounts, combine, ratio, serialize
-from app.services.inventory_forecast import FutureRow, future_rows
+from app.services.financial_model import ratio
+from app.services.inventory_assessment import active_listings, listing_key
+from app.services.inventory_details import (
+    category_warehouse_shares,
+    inventory_kpis,
+    turnover_details,
+)
+from app.services.inventory_forecast import future_rows
+from app.services.inventory_metrics import (
+    add_turnover as add_turnover,
+)
+from app.services.inventory_metrics import (
+    stock_groups,
+)
+from app.services.inventory_metrics import (
+    stock_row as stock_row,
+)
+from app.services.inventory_metrics import (
+    turnover_rows as turnover_rows,
+)
+from app.services.inventory_seasonal import group_season, season_rows
 from app.services.inventory_sources import (
     InventoryFact,
     current_stock,
     matches,
     sum_amounts,
-    turnover_facts,
 )
+from app.services.inventory_turnover import build_turnover as build_turnover
 from app.services.report_dataset import ReportDataset
-from app.services.seasonal_risk import SeasonalRisk, seasonal_risk
-
-
-class InventoryRow(BaseModel):
-    key: str
-    label: str
-    dimensions: dict[str, str]
-    values: dict[str, str | None]
-    source_rows: list[int]
-
-
-class InventoryView(BaseModel):
-    summary: InventoryRow
-    breakdowns: dict[str, list[InventoryRow]]
-    turnover: list[InventoryRow]
-    future: list[FutureRow]
-    warnings: list[str]
-    source_note: str
-    seasonal: list[InventoryRisk]
-
-
-class InventoryRisk(BaseModel):
-    key: str
-    label: str
-    risk: SeasonalRisk
-
-
-InventoryView.model_rebuild()
-
-
-def inventory_risks(
-    dataset: ReportDataset, stocks: list[InventoryFact], turnover: list[InventoryFact]
-) -> list[InventoryRisk]:
-    pools: dict[str, list[InventoryFact]] = defaultdict(list)
-    for item in turnover:
-        pools["|".join(item.dimensions[name] for name in ("group", "site", "listing"))].append(item)
-    output = []
-    for row in stock_groups(stocks, ("group", "site", "listing")):
-        filters = ReportFilter(
-            group=row.dimensions["group"],
-            site=row.dimensions["site"],
-            listing=row.dimensions["listing"],
-        )
-        forecast, _ = future_rows(
-            dataset, [item for item in stocks if matches(item.dimensions, filters)], filters
-        )
-        basic = [item for item in forecast if item.scope == "所有仓库" and item.scenario == "基础"]
-        trend = {
-            item.dimensions["month"]: item.values
-            for item in turnover_rows(pools[row.key], filters)
-            if item.dimensions["scope"] == "所有仓库"
-        }
-        output.append(
-            InventoryRisk(
-                key=row.key,
-                label=row.label,
-                risk=seasonal_risk(dataset, filters, row.values, basic, trend),
-            )
-        )
-    return sorted(output, key=lambda item: item.risk.score, reverse=True)
-
-
-def stock_row(facts: list[InventoryFact], key: str, dimensions: dict[str, str]) -> InventoryRow:
-    values = sum_amounts(facts)
-    for name in ("age180", "age270"):
-        values[f"{name}_rate"] = ratio(values.get(name), values.get("in_stock"))
-    return InventoryRow(
-        key=key,
-        label=" / ".join(dimensions.values()) or "总计",
-        dimensions=dimensions,
-        values=serialize(values),
-        source_rows=[item.source.row for item in facts],
-    )
-
-
-def stock_groups(facts: list[InventoryFact], names: tuple[str, ...]) -> list[InventoryRow]:
-    grouped: dict[tuple[str, ...], list[InventoryFact]] = defaultdict(list)
-    for item in facts:
-        grouped[tuple(item.dimensions[name] for name in names)].append(item)
-    return [
-        stock_row(items, "|".join(key), dict(zip(names, key, strict=True)))
-        for key, items in sorted(grouped.items())
-    ]
-
-
-def add_turnover(values: Amounts, days: int) -> Amounts:
-    for suffix in ("qty", "purchase", "amount"):
-        flow = values.get(f"flow_{suffix}")
-        average = values.get(f"average_{suffix}")
-        values[f"days_{suffix}"] = ratio(
-            average * days if average is not None else None,
-            abs(flow) if flow is not None else None,
-        )
-    return values
-
-
-def turnover_rows(facts: list[InventoryFact], filters: ReportFilter) -> list[InventoryRow]:
-    selected = [item for item in facts if matches(item.dimensions, filters)]
-    output = []
-    for scope in ("所有仓库", "FBA+海外仓"):
-        by_month: dict[str, list[InventoryFact]] = defaultdict(list)
-        for item in selected:
-            if scope == "所有仓库" or item.dimensions["warehouse"] != "本地仓":
-                by_month[item.dimensions["month"]].append(item)
-        monthly_values: dict[str, Amounts] = {}
-        for month, items in sorted(by_month.items()):
-            if month[:4] not in {"2025", "2026"} or month[5:] > "09":
-                continue
-            year, monthly = map(int, month.split("-"))
-            values = add_turnover(sum_amounts(items), calendar.monthrange(year, monthly)[1])
-            monthly_values[month] = values
-            output.append(
-                InventoryRow(
-                    key=f"{scope}|{month}",
-                    label=month,
-                    dimensions={"scope": scope, "month": month},
-                    values=serialize(values),
-                    source_rows=[],
-                )
-            )
-        for year in (2025, 2026):
-            periods = [monthly_values.get(f"{year}-{month:02}") for month in range(1, 10)]
-            values = {}
-            for suffix in ("qty", "purchase", "amount"):
-                average = combine(
-                    item.get(f"average_{suffix}") if item else None for item in periods
-                )
-                values[f"average_{suffix}"] = average / 9 if average is not None else None
-                values[f"flow_{suffix}"] = combine(
-                    item.get(f"flow_{suffix}") if item else None for item in periods
-                )
-            days = sum(calendar.monthrange(year, month)[1] for month in range(1, 10))
-            output.append(
-                InventoryRow(
-                    key=f"{scope}|{year}-YTD",
-                    label=f"{year}年1—9月累计",
-                    dimensions={"scope": scope, "month": f"{year}-YTD"},
-                    values=serialize(add_turnover(values, days)),
-                    source_rows=[],
-                )
-            )
-    return output
 
 
 def inventory_view(
@@ -185,6 +59,21 @@ def inventory_view(
         for row in breakdowns["age"]
         if row.values.get("age180") is not None and Decimal(row.values["age180"] or "0") > 0
     ]
+    # SKU定位字段来自原始库存行，不从产品名称推断。
+    for row in breakdowns["age"]:
+        source = next(
+            item
+            for item in stocks
+            if all(item.dimensions[name] == value for name, value in row.dimensions.items())
+        )
+        row.dimensions.update(
+            {name: source.dimensions[name] for name in ("asin", "fnsku", "product_name")}
+        )
+    breakdowns["age_listings"] = [
+        row
+        for row in stock_groups(stocks, ("group", "site", "listing"))
+        if Decimal(row.values.get("age180") or "0") > 0
+    ]
     totals = sum_amounts(stocks)
     for name in ("warehouses", "categories", "category3", "listings"):
         for row in breakdowns[name]:
@@ -193,9 +82,66 @@ def inventory_view(
                 value = Decimal(raw_value) if raw_value is not None else None
                 share = ratio(value, totals.get(field))
                 row.values[f"{field}_share"] = str(share) if share is not None else None
-    warnings = [
-        "库存规模、金额、结构、库龄和预测起点均取经营工作簿；周转天数单独取两年周转表，金额不要求两源一致。"
+    category_warehouse_shares(breakdowns["category_warehouses"], breakdowns["categories"])
+    for name, names in {
+        "group_turnover": ("group",),
+        "listing_turnover": ("group", "site", "listing"),
+        "category_turnover": ("category1", "category2", "category3"),
+    }.items():
+        breakdowns[name] = turnover_details(
+            dataset, turnover, stocks, filters, names, group_shares=name == "group_turnover"
+        )
+    # 原版三级品类结构仅统计FBA+海外仓，两种占比各自使用完整分母。
+    category_stocks = [item for item in stocks if item.dimensions["warehouse"] != "本地仓"]
+    breakdowns["category3"] = stock_groups(category_stocks, ("category1", "category2", "category3"))
+    category_totals = sum_amounts(category_stocks)
+    for row in breakdowns["category3"]:
+        for field in ("quantity", "amount"):
+            share = ratio(
+                Decimal(raw) if (raw := row.values.get(field)) is not None else None,
+                category_totals.get(field),
+            )
+            row.values[f"{field}_share"] = str(share) if share is not None else None
+    breakdowns["category3"].sort(
+        key=lambda row: Decimal(row.values.get("quantity") or "0"), reverse=True
+    )
+    trend = turnover_rows(turnover, filters)
+    kpis = inventory_kpis(trend)
+    active = active_listings(dataset)
+    seasonal_stocks = [item for item in stocks if listing_key(item.dimensions) in active]
+    seasonal_facts = [
+        item
+        for item in turnover
+        if matches(item.dimensions, filters) and listing_key(item.dimensions) in active
     ]
+    seasonal = (
+        season_rows(
+            dataset, seasonal_stocks, seasonal_facts, ("group", "site", "listing"), filters=filters
+        )
+        if filters.group
+        else []
+    )
+    styles = (
+        season_rows(
+            dataset,
+            seasonal_stocks,
+            seasonal_facts,
+            ("group", "site", "listing", "style"),
+            filters=filters,
+        )
+        if filters.group
+        else []
+    )
+    choices = [
+        item
+        for item in current_stock(dataset, ReportFilter(group=filters.group))
+        if not filters.group or listing_key(item.dimensions) in active
+    ]
+    options = {
+        name: sorted({item.dimensions[name] for item in choices if item.dimensions[name]})
+        for name in ("site", "listing", "category3")
+    }
+    warnings = ["当期期末库存取经营底表；期初取上月基础库存，进销存流量保留原符号汇总后取绝对值。"]
     if unmatched:
         warnings.append(
             f"预测表有{unmatched}行未取得唯一参考归属，未纳入未来需求；未来支持结果的覆盖尚不完整。"
@@ -203,13 +149,30 @@ def inventory_view(
     return InventoryView(
         summary=stock_row(stocks, "summary", {}),
         breakdowns=breakdowns,
-        turnover=turnover_rows(turnover, filters),
+        turnover=trend,
         future=future,
         warnings=warnings,
-        source_note="经营工作簿：库存数据；周转：2025/2026库存周转表",
-        seasonal=inventory_risks(dataset, stocks, turnover),
+        source_note="来源：经营工作簿库存数据及产品基础信息、2025/2026库存周转表、MSKU销量预估表、库存发货天数表。库存状况按在售LISTING/款式汇总核算，标准天数按源表SKU等权平均向上取整；270天以上占比仅统计FBA在库。",
+        seasonal=seasonal,
+        seasonal_styles=styles,
+        seasonal_group=group_season(
+            dataset,
+            seasonal_stocks,
+            seasonal_facts,
+            filters.group,
+            seasonal,
+            styles,
+            filters=filters,
+        ),
+        kpis=kpis,
+        options=options,
+        conclusions=[
+            f"截至2026-09，所有仓库库存数量{Decimal(kpis[1].current or '0'):,.0f}件、"
+            f"库存资金{Decimal(kpis[0].current or '0') / 10000:,.1f}万元。",
+            f"9月所有仓库周转{Decimal(kpis[2].current or '0'):.1f}天，"
+            f"FBA+海外仓周转{Decimal(kpis[3].current or '0'):.1f}天。",
+            "未来支持天数按无新增补货、预测销量逐月扣减测算。",
+        ]
+        if stocks
+        else ["当前筛选没有当期库存记录。"],
     )
-
-
-def build_turnover(dataset: ReportDataset) -> list[InventoryFact]:
-    return turnover_facts(dataset)

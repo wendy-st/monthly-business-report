@@ -4,6 +4,7 @@ import { init, use, type EChartsCoreOption } from "echarts/core";
 import { BarChart, LineChart, PieChart, ScatterChart } from "echarts/charts";
 import {
   GridComponent,
+  GraphicComponent,
   LegendComponent,
   MarkLineComponent,
   TooltipComponent,
@@ -16,6 +17,7 @@ use([
   PieChart,
   ScatterChart,
   GridComponent,
+  GraphicComponent,
   LegendComponent,
   MarkLineComponent,
   TooltipComponent,

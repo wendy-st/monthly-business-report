@@ -7,6 +7,7 @@ from collections.abc import Iterable
 from decimal import Decimal
 from functools import lru_cache
 
+from app.schemas.products import ProductStyleContext
 from app.schemas.reports import FinancialView, MetricRow, ReportFilter, WaterfallStep
 from app.services.financial_model import (
     COST_LABELS,
@@ -15,6 +16,7 @@ from app.services.financial_model import (
     aggregate,
     serialize,
 )
+from app.services.product_diagnosis import diagnose_styles
 from app.services.report_dataset import OperatingFact, ReportDataset
 
 PERIODS = ("2026-09", "2026-08", "2025-09")
@@ -244,40 +246,9 @@ def filter_options(dataset: ReportDataset, filters: ReportFilter) -> dict[str, l
 
 
 @lru_cache(maxsize=1)
+def product_contexts(dataset: ReportDataset) -> dict[str, ProductStyleContext]:
+    return diagnose_styles(breakdown(dataset.operating, "styles"))
+
+
 def product_diagnoses(dataset: ReportDataset) -> dict[str, str]:
-    rows = breakdown(dataset.operating, "styles")
-    valid = [
-        row
-        for row in rows
-        if aggregate_value(row.current, "revenue") > 0 and row.current["gross_margin"] is not None
-    ]
-    output = {}
-    for row in rows:
-        current = row.dimensions
-        candidates = []
-        for grain in (("group", "site", "listing"), ("group", "site", "category2")):
-            pool = [
-                item for item in valid if all(item.dimensions[key] == current[key] for key in grain)
-            ]
-            if len(pool) >= 2:
-                candidates = pool
-                break
-        margin = row.current.get("gross_margin")
-        if not candidates or margin is None:
-            diagnosis = "待核验"
-        else:
-            revenue = sum(
-                (aggregate_value(item.current, "revenue") for item in candidates), Decimal(0)
-            )
-            gross = sum(
-                (aggregate_value(item.current, "gross_profit") for item in candidates), Decimal(0)
-            )
-            diagnosis = (
-                "产品成本问题"
-                if Decimal(margin) < gross / revenue
-                else "费用端问题"
-                if aggregate_value(row.current, "profit") < 0
-                else "健康盈利"
-            )
-        output[row.key] = diagnosis
-    return output
+    return {key: context.diagnosis for key, context in product_contexts(dataset).items()}

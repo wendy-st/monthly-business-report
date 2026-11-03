@@ -1,3 +1,4 @@
+import { useReportHeaderOffset } from "../shared/report/useReportHeaderOffset";
 import { useState } from "react";
 import { Button, Layout, Modal, Tag, Typography } from "antd";
 import { ReportNavigation } from "./ReportNavigation";
@@ -8,9 +9,12 @@ import { groupNames } from "../features/overview/fixtures";
 import { BusinessAnalysis } from "../features/business/BusinessAnalysis";
 import { InventoryAnalysis } from "../features/inventory/InventoryAnalysis";
 import { ListingAnalysis } from "../features/listing/ListingAnalysis";
+import { HistoryDashboard } from "../features/business/HistoryDashboard";
+import { businessPreview } from "../features/business/fixtures";
 
 /** 月份与分组在壳层维护；本阶段仅验证布局和界面状态。 */
 export function ReportApp() {
+  const body = useReportHeaderOffset();
   const [page, setPage] = useState("overview");
   const [group, setGroup] = useState(groupNames[0]);
   const [showBasis, setShowBasis] = useState(false);
@@ -50,6 +54,7 @@ export function ReportApp() {
           page={page}
           group={group}
           groups={groupNames}
+          includeItk={false}
           onNavigate={navigate}
         />
         <div className="sidebar-tools">
@@ -65,7 +70,7 @@ export function ReportApp() {
           </Button>
         </div>
       </Layout.Sider>
-      <Layout className="report-body">
+      <Layout className="report-body" ref={body}>
         <header className="report-header">
           <div>
             <Typography.Title level={1}>
@@ -84,6 +89,18 @@ export function ReportApp() {
           {page === "products" && <ProductAnalysis />}
           {page === "business" && (
             <BusinessAnalysis key={group} group={group} />
+          )}
+          {page === "annual" && (
+            <section
+              className="section-stack annual-page"
+              aria-label="年度经营分析"
+            >
+              <HistoryDashboard
+                key={group}
+                group={group}
+                rows={businessPreview(group, "全部", "全部").rows}
+              />
+            </section>
           )}
           {page === "sources" && <SourceImport />}
           {page === "inventory" && <InventoryAnalysis />}

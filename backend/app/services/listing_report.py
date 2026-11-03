@@ -8,17 +8,24 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from app.schemas.inventory import InventoryRow
+from app.schemas.listing import ListingIssue, select_issues
 from app.schemas.reports import MetricRow, ReportFilter
-from app.services.financial_model import number
+from app.services.cost_analysis import analyses
+from app.services.financial_model import FIELDS, number
 from app.services.financial_report import breakdown, select_facts
 from app.services.inventory_forecast import FutureRow, future_rows
-from app.services.inventory_report import InventoryRow, stock_row, turnover_rows
+from app.services.inventory_metrics import stock_row, turnover_rows
+from app.services.inventory_readiness import all_readiness
 from app.services.inventory_sources import InventoryFact, current_stock, matches
+from app.services.listing_financial_issues import financial_issues, retired_profit_issues
+from app.services.listing_inventory_issues import cleanup_issue, inventory_issues, stock_only_issues
 from app.services.report_dataset import ReportDataset
 from app.services.seasonal_risk import SeasonalRisk, seasonal_risk
+from app.services.shipping_standards import shipping_identity
 
 SEPTEMBER_NEW_LISTINGS = {"RGA102", "RG810", "RG811", "RG812", "RG813", "RG814", "RG815", "RG816"}
-EXCLUDED_SITES = {"FR", "ES", "IT"}
+EXCLUDED_SITES = {"MX", "FR", "ES", "IT"}
 
 
 class ListingItem(BaseModel):
@@ -34,6 +41,7 @@ class ListingItem(BaseModel):
     future: list[FutureRow]
     stockout: str
     seasonal: SeasonalRisk
+    issues: list[ListingIssue] = []
 
 
 class ListingView(BaseModel):
@@ -57,10 +65,10 @@ def listing_positions(dataset: ReportDataset) -> dict[tuple[str, str, str], str]
 def listing_mode(
     group: str, site: str, listing: str, position: str
 ) -> Literal["full", "promotion", "retired", "mx"]:
+    if position in {"废弃", "已停运", "停运"}:
+        return "retired"
     if listing in SEPTEMBER_NEW_LISTINGS or group in {"HCM", "Ash"} and site == "UK":
         return "promotion"
-    if position in {"废弃", "已停运"}:
-        return "retired"
     return "mx" if site == "MX" else "full"
 
 
@@ -88,6 +96,7 @@ def listing_view(
             (item.dimensions["group"], item.dimensions["site"], item.dimensions["listing"])
         ].append(item)
     positions = listing_positions(dataset)
+    readiness = all_readiness(dataset, shipping_identity())
     turnover_by_listing: dict[tuple[str, str, str], list[InventoryFact]] = defaultdict(list)
     for item in turnover:
         if matches(item.dimensions, filters):
@@ -111,19 +120,50 @@ def listing_view(
             ),
             {},
         )
-        position = "新品" if listing in SEPTEMBER_NEW_LISTINGS else positions.get(key, "待补充")
+        position = positions.get(key, "待补充")
+        if listing in SEPTEMBER_NEW_LISTINGS and position not in {"废弃", "已停运", "停运"}:
+            position = "新品"
         metrics = business.get(key)
         stock = stock_row(
             inventory[key], "|".join(key), dict(zip(("group", "site", "listing"), key, strict=True))
         )
-        has_business = metrics is not None and any(
-            number(period.get(name)) not in {None, Decimal(0)}
-            for period in (metrics.current, metrics.previous, metrics.year_ago)
-            for name in ("revenue", "profit", "units", "purchase", "freight")
+        has_current = metrics is not None and metrics.record_count > 0
+        # 有本期记录但字段缺失时继续保留核查，不能把缺失当作零而排除。
+        has_activity = (
+            has_current
+            and metrics is not None
+            and any(number(metrics.current.get(name)) != Decimal(0) for name in FIELDS)
         )
-        has_stock = number(stock.values.get("quantity")) not in {None, Decimal(0)}
-        if not has_business and not has_stock:
+        has_stock = any(
+            item.amounts.get(name) != Decimal(0)
+            for item in inventory[key]
+            for name in ("quantity", "amount", "age270")
+        )
+        if not has_current and not has_stock:
             continue
+        mode = listing_mode(group, site, listing, position)
+        if mode == "retired":
+            if not has_activity and not has_stock:
+                continue
+            issues = retired_profit_issues(metrics) if has_activity else []
+            if has_stock:
+                issues.append(cleanup_issue(stock))
+        elif metrics is None or not has_current:
+            issues = stock_only_issues(
+                stock, sorted({row.dimensions["warehouse"] for row in inventory[key]})
+            )
+        else:
+            costs = analyses(dataset, selected)
+            issues = select_issues(
+                [
+                    *financial_issues(metrics, costs),
+                    *inventory_issues(
+                        stock,
+                        trend,
+                        [row for row in readiness if matches(row.dimensions, selected)],
+                    ),
+                ]
+            )
         output.append(
             ListingItem(
                 key="|".join(key),
@@ -131,7 +171,8 @@ def listing_view(
                 site=site,
                 listing=listing,
                 position=position,
-                mode=listing_mode(group, site, listing, position),
+                mode=mode,
+                issues=issues,
                 business=metrics,
                 inventory=stock,
                 turnover=september,
@@ -153,5 +194,5 @@ def listing_view(
     return ListingView(
         items=output,
         excluded_sites=sorted(EXCLUDED_SITES),
-        source_note="9月沿用原版新品/UK推广、停运废弃及MX简版，FR/ES/IT仅在本模块排除；公司经营合计保留全部站点。",
+        source_note="常规LISTING归总3—5条结论；无经营记录但有库存的仅分析库存。停运、废弃仅保留本期利润侵蚀及待清库存，无本期事项不展示，特殊对象不凑条数。排除MX/FR/ES/IT，仅作用于本模块。金额为人民币；剔价口径同时统一汇率。",
     )

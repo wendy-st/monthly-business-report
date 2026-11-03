@@ -1,0 +1,253 @@
+.inventory-page > *,
+.inventory-page .inventory-age-card {
+  min-width: 0;
+}
+.inventory-turnover-chart-scroll {
+  overflow-x: auto;
+}
+.inventory-turnover-chart-scroll .report-chart {
+  min-width: 620px;
+}
+.inventory-metric-label {
+  color: var(--seekway-color-text-secondary);
+  font-size: 13px;
+}
+.inventory-page .metric-comparison .inventory-decrease {
+  color: var(--report-color-positive);
+}
+.inventory-page .metric-comparison .inventory-increase {
+  color: var(--report-color-negative);
+}
+.inventory-group-filters {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 10px;
+}
+.inventory-group-filters label {
+  display: grid;
+  gap: 4px;
+  min-width: 160px;
+  font-size: 12px;
+  color: var(--seekway-color-text-secondary);
+}
+.inventory-group-filters label:last-of-type {
+  min-width: 260px;
+}
+.inventory-page .warehouse-share-row {
+  grid-template-columns: minmax(55px, 20%) minmax(25px, 1fr) minmax(100px, 28%);
+  min-height: 31px;
+}
+.inventory-page .warehouse-share-row > span:last-child {
+  font-size: 12px;
+}
+.inventory-page .inventory-structure-table th,
+.inventory-page .inventory-structure-table td {
+  border: 1px solid var(--seekway-color-border-secondary);
+  padding: 8px;
+  text-align: right;
+}
+.inventory-page .inventory-structure-table th:first-child {
+  text-align: center;
+}
+.inventory-share-line {
+  background: var(--report-color-table-label);
+  color: var(--seekway-color-text-secondary);
+}
+.inventory-category-structure {
+  max-height: 355px;
+}
+.inventory-category-structure table {
+  min-width: 650px;
+}
+.inventory-category-structure th {
+  text-align: left;
+}
+.inventory-category-structure td {
+  text-align: right;
+}
+.inventory-share-value {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.inventory-share-value > .warehouse-track {
+  display: inline-block;
+  width: 80px;
+  height: 7px;
+}
+.inventory-future-alerts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.inventory-future-alerts > div {
+  display: grid;
+  gap: 5px;
+  padding: 10px 14px;
+  background: var(--report-color-conclusion-bg);
+  border-left: 3px solid var(--report-color-overseas);
+  font-size: 12px;
+}
+.inventory-holding-chart {
+  border-top: 1px solid var(--seekway-color-border-secondary);
+  padding-top: 10px;
+}
+.inventory-holding-chart h3 {
+  margin: 0 0 4px 45px;
+  font-size: 12px;
+  color: var(--seekway-color-text-secondary);
+}
+.inventory-page .inventory-holding-chart .chart-canvas {
+  height: 180px;
+}
+.inventory-age-cards {
+  display: grid;
+  gap: 14px;
+}
+.inventory-age-card {
+  border: 1px solid var(--seekway-color-border-secondary);
+  border-radius: 6px;
+  padding: 14px;
+}
+.inventory-age-heading,
+.inventory-age-heading > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.inventory-age-heading {
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.inventory-age-heading h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.inventory-age-heading span,
+.inventory-season-badges > span {
+  background: var(--report-color-table-label);
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.inventory-age-scroll {
+  max-height: 540px;
+}
+.inventory-age-table {
+  width: 100%;
+  min-width: 850px;
+  table-layout: fixed;
+}
+.inventory-age-table th,
+.inventory-age-table td {
+  padding: 6px 10px;
+}
+.inventory-age-table td {
+  text-align: right;
+}
+.inventory-age-table > thead th:nth-child(3),
+.inventory-age-table > thead th:nth-child(5) {
+  width: 27%;
+}
+.inventory-page .inventory-age-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0 5px;
+  font-size: 12px;
+}
+.inventory-age-bar .warehouse-track {
+  flex: 1;
+  height: 8px;
+}
+.inventory-age-deep i {
+  background: var(--seekway-color-primary);
+}
+.inventory-age-expanded {
+  background: var(--report-color-table-label);
+}
+.inventory-age-expanded h4 {
+  margin: 10px 0;
+  text-align: left;
+  font-size: 13px;
+}
+.inventory-age-skus {
+  min-width: 1600px;
+  background: var(--seekway-color-bg-container);
+}
+.inventory-age-skus td {
+  overflow-wrap: anywhere;
+}
+.inventory-season-badges,
+.inventory-season-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.inventory-season-metrics {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+.inventory-season-metrics > div {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  background: var(--report-color-table-label);
+}
+.inventory-season-metrics > div > span {
+  color: var(--seekway-color-text-secondary);
+  font-size: 12px;
+}
+.inventory-season-metrics strong {
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+.inventory-season-conclusions,
+.inventory-season-core {
+  margin: 12px 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--report-color-overseas);
+  background: var(--report-color-conclusion-bg);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.inventory-season-conclusions p {
+  margin: 4px 0;
+}
+.inventory-season-core strong {
+  margin-right: 12px;
+}
+.inventory-season-toolbar {
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--seekway-color-text-secondary);
+}
+.inventory-season-details small {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--seekway-color-text-secondary);
+}
+.inventory-season-toolbar .report-tabs {
+  border: 0;
+  padding: 0;
+  min-height: 0;
+}
+@media (max-width: 1280px) {
+  .inventory-page .inventory-structure-grid {
+    grid-template-columns: 1fr;
+  }
+  .inventory-season-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

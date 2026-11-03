@@ -46,12 +46,10 @@ test("首次加载请求不重复，返回总览复用已读取结果", async ({
     requests.filter((url) => new URL(url).pathname.endsWith("/options")),
   ).toHaveLength(1);
   await page
-    .getByRole("menuitem", { name: "2. 业务组经营分析", exact: true })
+    .getByRole("menuitem", { name: "月度经营分析", exact: true })
     .click();
   await expect(page.locator(".business-page .diagnostic-blocks")).toBeVisible();
-  await page
-    .getByRole("menuitem", { name: "1. 经营总览", exact: true })
-    .click();
+  await page.getByRole("menuitem", { name: "经营总览", exact: true }).click();
   await expect(page.locator(".overview-leverage")).toBeVisible();
   expect(countOverview()).toBe(1);
   const html = await (await page.request.get("/")).text();
@@ -75,9 +73,9 @@ test("切换业务组后迟到的旧请求不会覆盖新组金额", async ({ pa
   await page.goto("/");
   await expect(page.locator(".overview-leverage")).toBeVisible();
   await page
-    .getByRole("menuitem", { name: "2. 业务组经营分析", exact: true })
+    .getByRole("menuitem", { name: "月度经营分析", exact: true })
     .click();
-  await page.getByRole("menuitem", { name: "2.2 HCM", exact: true }).click();
+  await page.getByRole("menuitem", { name: "HCM", exact: true }).click();
   const revenue = page.locator(".business-page .metric-value").nth(1);
   const display = (
     Number(expected.summary.current.revenue) / 10000

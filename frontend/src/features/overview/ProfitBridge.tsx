@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, Segmented, Typography, theme } from "antd";
 import { FinancialDiagnostics } from "../../shared/report/FinancialDiagnostics";
 import { ReportChart } from "../../shared/report/ReportChart";
+import { tooltipValue } from "../../shared/report/format";
 import { waterfallFixtures } from "./fixtures";
 
 export function ProfitBridge({
@@ -37,7 +38,7 @@ export function ProfitBridge({
       <ReportChart
         summary={fixture.summary}
         option={{
-          tooltip: { trigger: "axis" },
+          tooltip: { trigger: "axis", valueFormatter: tooltipValue("万") },
           legend: { data: ["净利润及影响金额"] },
           grid: { left: 52, right: 24, top: 40, bottom: 36 },
           xAxis: { type: "category", data: fixture.names },

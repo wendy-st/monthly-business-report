@@ -1,13 +1,15 @@
-"""库存两套来源严格分离：经营库存管存量，周转表仅管周转。"""
+"""经营库存及基础周转来源适配；当期覆盖见inventory_turnover。"""
 
 from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
 from decimal import Decimal
+from functools import lru_cache
 
 from app.schemas.reports import ReportFilter
 from app.services.financial_model import Amounts, combine, number
+from app.services.inventory_styles import style_name
 from app.services.report_dataset import ReportDataset
 from app.services.source_import import SourceRecord
 
@@ -19,6 +21,20 @@ class InventoryFact:
     dimensions: dict[str, str]
     amounts: Amounts
     source: SourceRecord
+
+
+@lru_cache(maxsize=1)
+def inventory_categories(dataset: ReportDataset) -> dict[tuple[str, str], dict[str, str]]:
+    pools: dict[tuple[str, str], dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
+    for source in dataset.records("products"):
+        for field in ("category1", "category2", "category3"):
+            value = getattr(source, field)
+            if value and value != "未匹配":
+                pools[source.site, source.listing][field].add(value)
+    return {
+        key: {field: next(iter(values)) for field, values in fields.items() if len(values) == 1}
+        for key, fields in pools.items()
+    }
 
 
 def inventory_dimensions(dataset: ReportDataset, source: SourceRecord) -> dict[str, str]:
@@ -43,13 +59,24 @@ def inventory_dimensions(dataset: ReportDataset, source: SourceRecord) -> dict[s
         "month": source.period,
         "sku": source.sku,
         "msku": source.msku,
+        # 当期补充映射不追溯覆盖历史空款式，保留原报告历史聚合口径。
+        "style": source.style
+        or (
+            style_name(dataset, source.site, source.listing, source.sku, source.msku)
+            if source.period == "2026-09"
+            else ""
+        ),
+        "asin": source.raw.get("ASIN") or "",
+        "fnsku": source.raw.get("FNSKU") or "",
+        "product_name": source.raw.get("产品名称") or "",
+        **inventory_categories(dataset).get((source.site, source.listing), {}),
     }
 
 
 def matches(values: dict[str, str], filters: ReportFilter) -> bool:
     return all(
         not getattr(filters, key) or getattr(filters, key) == values[key]
-        for key in ("group", "site", "listing", "category1", "category2", "category3")
+        for key in ("group", "site", "listing", "category1", "category2", "category3", "style")
     )
 
 
@@ -62,6 +89,9 @@ def current_stock(dataset: ReportDataset, filters: ReportFilter) -> list[Invento
         if values["warehouse"] not in WAREHOUSES:
             continue
         raw = source.raw
+        # 同步状态异常的FBA记录不属于本次应统计库存，整条剔除。
+        if values["warehouse"] == "FBA仓" and raw.get("同步状态") == "异常":
+            continue
         amounts = {
             key: number(raw.get(field))
             for key, field in {
@@ -80,8 +110,8 @@ def current_stock(dataset: ReportDataset, filters: ReportFilter) -> list[Invento
             amounts[key] for key in ("age181", "age271", "age331", "age365")
         )
         amounts["age270"] = combine(amounts[key] for key in ("age271", "age331", "age365"))
-        if values["warehouse"] != "FBA仓" or raw.get("同步状态") == "异常":
-            for key in ("in_stock", "age180", "age270"):
+        if values["warehouse"] != "FBA仓":
+            for key in ("in_stock", "age180", "age270", "age181", "age271", "age331", "age365"):
                 amounts[key] = Decimal(0)
         result.append(InventoryFact(values, amounts, source))
     return result
@@ -142,37 +172,62 @@ def sum_amounts(facts: list[InventoryFact]) -> Amounts:
 
 
 def turnover_facts(dataset: ReportDataset) -> list[InventoryFact]:
+    names = (
+        "month",
+        "warehouse",
+        "group",
+        "site",
+        "category1",
+        "category2",
+        "category3",
+        "listing",
+        "style",
+        "sku",
+        "msku",
+    )
     pools: dict[tuple[str, ...], list[InventoryFact]] = defaultdict(list)
     for source in dataset.records("inventory"):
-        values = inventory_dimensions(dataset, source)
-        source_key: tuple[str, ...] = (
-            source.period,
-            values["warehouse"],
-            source.site,
-            source.listing,
-            source.sku,
-            source.msku,
+        dimensions = inventory_dimensions(dataset, source)
+        pools[tuple(dimensions[name] for name in names)].append(
+            InventoryFact(dimensions, turnover_source_amounts(source), source)
         )
-        pools[source_key].append(InventoryFact(values, turnover_source_amounts(source), source))
-    grouped = {key: sum_amounts(facts) for key, facts in pools.items()}
+    grouped = {key: sum_amounts(items) for key, items in pools.items()}
+    previous_pools: dict[tuple[str, ...], list[InventoryFact]] = defaultdict(list)
+    for items in pools.values():
+        for item in items:
+            key = tuple(
+                item.dimensions[name]
+                for name in ("month", "warehouse", "site", "listing", "sku", "msku")
+            )
+            previous_pools[key].append(item)
+    previous_values = {key: sum_amounts(items) for key, items in previous_pools.items()}
+    used: set[tuple[str, ...]] = set()
     output = []
-    for key, amounts in grouped.items():
-        representative = pools[key][0]
-        previous_key = (shift_month(key[0], -1), *key[1:])
-        previous = grouped.get(previous_key)
+    for key in sorted(grouped):
+        amounts = grouped[key]
+        item = pools[key][0]
+        match_key = tuple(
+            item.dimensions[name]
+            for name in ("month", "warehouse", "site", "listing", "sku", "msku")
+        )
+        previous = previous_values.get((shift_month(match_key[0], -1), *match_key[1:]))
         for suffix in ("qty", "purchase", "amount"):
-            if representative.dimensions["warehouse"] == "FBA仓":
-                # 上月没有该SKU记录代表该SKU上月在途为零；字段缺失仍保留缺失。
-                transit = previous.get(f"transit_{suffix}") if previous else Decimal(0)
+            if item.dimensions["warehouse"] == "FBA仓":
+                transit = (
+                    previous.get(f"transit_{suffix}")
+                    if previous and match_key not in used
+                    else Decimal(0)
+                )
                 beginning = combine([amounts[f"base_begin_{suffix}"], transit])
             else:
-                beginning = previous.get(f"end_{suffix}") if previous else Decimal(0)
+                beginning = (
+                    previous.get(f"end_{suffix}")
+                    if previous and match_key not in used
+                    else Decimal(0)
+                )
             amounts[f"begin_{suffix}"] = beginning
-            ending = amounts.get(f"end_{suffix}")
-            total = combine([beginning, ending])
+            total = combine([beginning, amounts.get(f"end_{suffix}")])
             amounts[f"average_{suffix}"] = total / 2 if total is not None else None
-        groups = {item.dimensions["group"] for item in pools[key]}
-        if len(groups) > 1:
-            representative.dimensions["group"] = "未分配"
-        output.append(InventoryFact(representative.dimensions, amounts, representative.source))
+        used.add(match_key)
+        output.append(InventoryFact(item.dimensions, amounts, item.source))
     return output

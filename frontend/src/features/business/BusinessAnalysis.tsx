@@ -6,67 +6,51 @@ import { donutOption, trendOption } from "../../shared/report/chart-options";
 import { formatNumber } from "../../shared/report/format";
 import { businessPreview, businessWaterfallPreview } from "./fixtures";
 
-import { ReportTabs } from "../../shared/report/ReportTabs";
 import { ProfitBridge } from "../overview/ProfitBridge";
 import { BusinessCurrentDetails } from "./BusinessCurrentDetails";
-import { HistoryDashboard } from "./HistoryDashboard";
 
 export function BusinessAnalysis({ group }: { group: string }) {
   const [site, setSite] = useState("全部");
   const [listing, setListing] = useState("全部");
-  const [tab, setTab] = useState("current");
   const fixture = businessPreview(group, site, listing);
   return (
     <div className="section-stack business-page">
-      <ReportTabs
-        label="业务分析视图"
-        value={tab}
-        onChange={setTab}
-        options={[
-          { value: "current", label: "当月经营概况" },
-          { value: "history", label: "近6年LISTING盈收趋势" },
-        ]}
-      />
-      {tab === "current" && (
-        <Card size="small" className="business-filters">
-          <Space wrap className="business-filter-row">
-            <label className="filter-field">
-              站点
-              <Select
-                aria-label="业务组站点"
-                value={site}
-                onChange={setSite}
-                style={{ width: 160, height: 34 }}
-                options={["全部", "US", "CA"].map((value) => ({
+      <Card size="small" className="business-filters">
+        <Space wrap className="business-filter-row">
+          <label className="filter-field">
+            站点
+            <Select
+              aria-label="业务组站点"
+              value={site}
+              onChange={setSite}
+              style={{ width: 160, height: 34 }}
+              options={["全部", "US", "CA"].map((value) => ({
+                value,
+                label: value === "全部" ? "全部站点" : value,
+              }))}
+            />
+          </label>
+          <label className="filter-field">
+            LISTING
+            <Select
+              aria-label="业务组LISTING"
+              value={listing}
+              onChange={setListing}
+              style={{ width: 160, height: 34 }}
+              options={["全部", "DEMO-A", "DEMO-B", "DEMO-C", "DEMO-D"].map(
+                (value) => ({
                   value,
-                  label: value === "全部" ? "全部站点" : value,
-                }))}
-              />
-            </label>
-            <label className="filter-field">
-              LISTING
-              <Select
-                aria-label="业务组LISTING"
-                value={listing}
-                onChange={setListing}
-                style={{ width: 160, height: 34 }}
-                options={["全部", "DEMO-A", "DEMO-B", "DEMO-C", "DEMO-D"].map(
-                  (value) => ({
-                    value,
-                    label: value === "全部" ? "全部LISTING" : value,
-                  }),
-                )}
-              />
-            </label>
-            <Typography.Text type="secondary">
-              合成样例：{group} / {site} / {listing}
-            </Typography.Text>
-          </Space>
-        </Card>
-      )}
-      {tab === "history" ? (
-        <HistoryDashboard group={group} rows={fixture.rows} />
-      ) : !fixture.rows.length ? (
+                  label: value === "全部" ? "全部LISTING" : value,
+                }),
+              )}
+            />
+          </label>
+          <Typography.Text type="secondary">
+            合成样例：{group} / {site} / {listing}
+          </Typography.Text>
+        </Space>
+      </Card>
+      {!fixture.rows.length ? (
         <Empty description="筛选无结果，请调整站点或LISTING" />
       ) : (
         <>

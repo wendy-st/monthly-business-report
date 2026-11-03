@@ -1,22 +1,35 @@
+import {
+  AppstoreOutlined,
+  BarChartOutlined,
+  InboxOutlined,
+  LineChartOutlined,
+  PieChartOutlined,
+  UnorderedListOutlined,
+} from "@ant-design/icons";
+
 const pages = [
-  ["overview", "1. 经营总览"],
-  ["business", "2. 业务组经营分析"],
-  ["products", "3. 产品经营分析"],
-  ["inventory", "4. 库存周转"],
-  ["listing", "5. LISTING业务分析报告"],
+  ["overview", "经营总览", PieChartOutlined],
+  ["business", "月度经营分析", BarChartOutlined],
+  ["annual", "年度经营分析", LineChartOutlined],
+  ["products", "品类经营分析", AppstoreOutlined],
+  ["inventory", "库存周转", InboxOutlined],
+  ["itk", "ITK大盘数据分析", BarChartOutlined],
+  ["listing", "LISTING分析问题清单", UnorderedListOutlined],
 ] as const;
 
-/** 原稿的文字导航；子组沿细竖线排列，不额外插入组标题。 */
+/** 图标与文字共同标识模块；月度、年度和问题清单按同一小组切换。 */
 export function ReportNavigation({
   page,
   group,
   onNavigate,
   groups,
+  includeItk = true,
 }: {
   page: string;
   group: string;
   onNavigate: (key: string) => void;
   groups: string[];
+  includeItk?: boolean;
 }) {
   return (
     <nav
@@ -47,34 +60,41 @@ export function ReportNavigation({
         buttons[next]?.focus();
       }}
     >
-      {pages.map(([key, label]) => (
-        <div key={key}>
-          <button
-            role="menuitem"
-            aria-current={page === key ? "page" : undefined}
-            className={`report-nav-main ${page === key ? "active" : ""}`}
-            onClick={() => onNavigate(key)}
-          >
-            {label}
-          </button>
-          {page === key && ["business", "listing"].includes(key) && (
-            <div className="report-subnav" role="group" aria-label="业务小组">
-              {groups.map((name, index) => (
-                <button
-                  key={name}
-                  role="menuitem"
-                  aria-current={name === group ? "page" : undefined}
-                  className={`report-nav-sub ${name === group ? "active" : ""}`}
-                  onClick={() => onNavigate(`${key}:${name}`)}
+      {pages
+        .filter(([key]) => includeItk || key !== "itk")
+        .map(([key, label, Icon]) => (
+          <div key={key}>
+            <button
+              role="menuitem"
+              aria-current={page === key ? "page" : undefined}
+              className={`report-nav-main ${page === key ? "active" : ""}`}
+              onClick={() => onNavigate(key)}
+            >
+              <Icon className="report-nav-icon" aria-hidden />
+              <span>{label}</span>
+            </button>
+            {page === key &&
+              ["business", "annual", "listing"].includes(key) && (
+                <div
+                  className="report-subnav"
+                  role="group"
+                  aria-label="业务小组"
                 >
-                  {key === "business" ? "2" : "5"}.{index + 1} {name}
-                  {key === "listing" ? "LISTING分析报告" : ""}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
+                  {groups.map((name) => (
+                    <button
+                      key={name}
+                      role="menuitem"
+                      aria-current={name === group ? "page" : undefined}
+                      className={`report-nav-sub ${name === group ? "active" : ""}`}
+                      onClick={() => onNavigate(`${key}:${name}`)}
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
+              )}
+          </div>
+        ))}
     </nav>
   );
 }

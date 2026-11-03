@@ -16,6 +16,7 @@ class OperatingFact:
     source: SourceRecord
     amounts: Amounts
     assignment: str
+    style_renamed: bool = False
 
 
 class ReportDataset:
@@ -52,7 +53,9 @@ class ReportDataset:
         for fact in self.operating:
             styles = current.get(key(fact.source), set())
             if fact.source.period < "2026-09" and fact.source.msku and len(styles) == 1:
-                fact.source.style = next(iter(styles))
+                aligned = next(iter(styles))
+                fact.style_renamed = fact.source.style != aligned
+                fact.source.style = aligned
 
     def records(self, family: str) -> list[SourceRecord]:
         if family not in self.cache:

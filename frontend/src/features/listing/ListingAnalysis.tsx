@@ -1,7 +1,6 @@
 import { Button, Card, Tag, Tooltip, Typography } from "antd";
 import { PrinterOutlined } from "@ant-design/icons";
 import { productFixtures } from "../products/fixtures";
-import { groupNames } from "../overview/fixtures";
 import { ListingCard } from "./ListingCard";
 
 export function ListingAnalysis({ group }: { group: string }) {
@@ -11,9 +10,7 @@ export function ListingAnalysis({ group }: { group: string }) {
     <div className="section-stack listing-page">
       <div className="listing-heading">
         <div>
-          <h2 className="section-heading">
-            5.{groupNames.indexOf(group) + 1} {group}LISTING分析报告
-          </h2>
+          <h2 className="section-heading">{group} · LISTING分析问题清单</h2>
           <Typography.Text type="secondary">
             按小组、站点、LISTING归集经营、费用、库存周转及未来预警。
           </Typography.Text>
